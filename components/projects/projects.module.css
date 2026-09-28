@@ -1,0 +1,452 @@
+/* ------------------------------------------------------------------ the Projects page */
+
+/* The list and the case studies share one box. The list stays in the flow, so it
+   measures true; each case lies over it from the top. While a card lifts, the box's
+   height runs between the two (Projects.tsx), and the glass follows it. Everything
+   that moves is drawn per frame from the card's spring. */
+.projects {
+  position: relative;
+}
+
+.index {
+  position: relative;
+}
+
+.intro {
+  transform-origin: 50% 0;
+}
+
+/* ------------------------------------------------------------------ the list */
+
+/* An inset grouped list, 8px in from the glass (so concentric). Its fill is a layer
+   of its own, so a lifted row can leave it behind. */
+.list {
+  --bg: 1;
+  position: relative;
+  display: grid;
+  margin: 22px -24px 0;
+  padding: 6px 0;
+  list-style: none;
+}
+
+.list::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 32px;
+  background: rgb(255 255 255 / 0.045);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  opacity: var(--bg);
+  pointer-events: none;
+}
+
+.row {
+  --line: 1;
+  position: relative;
+  transform-origin: 50% 50%;
+}
+
+/* hairlines start on the text column, as in iOS */
+.row + .row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 64px;
+  right: 24px;
+  height: 1px;
+  background: var(--hairline);
+  opacity: var(--line);
+}
+
+.rowHit {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 20px 12px 24px;
+  border: 0;
+  border-radius: 26px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 450ms var(--ease-out),
+    background-color 250ms var(--ease-out);
+}
+
+/* pressed, it gives a little first, like a card on the Today tab */
+.rowHit:active {
+  transform: scale(0.975);
+  transition-duration: 120ms;
+}
+
+.row[data-hot] .rowHit {
+  background: rgb(255 255 255 / 0.035);
+}
+
+.rowHit:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: -4px;
+}
+
+/* The number: the same one the pin carries on the map. Lit, it matches the pin. */
+.disc {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.07);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    inset 0 0 0 1px rgb(237 230 222 / 0.22);
+  color: var(--bone);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  transform-origin: 0 0;
+  transition:
+    background-color 250ms var(--ease-out),
+    color 250ms var(--ease-out),
+    box-shadow 250ms var(--ease-out);
+}
+
+.row[data-hot] .disc {
+  background: var(--bone);
+  color: var(--ink);
+  box-shadow: 0 0 0 4px rgb(237 230 222 / 0.1);
+}
+
+.rowText {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.rowName,
+.rowMeta,
+.title,
+.meta {
+  transform-origin: 0 0;
+}
+
+.rowName {
+  font-size: 0.975rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.rowMeta,
+.meta {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--bone-soft);
+  white-space: nowrap;
+}
+
+.rowRest {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  color: var(--ash);
+}
+
+.chevron {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.measure {
+  font-family: var(--font-measure);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ the card */
+
+/* The lifted row's own light: it rises out from under the row, grows to the glass's
+   edges (8px in, so concentric at 32px) and lets go as the case lands. */
+.card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-radius: 22px;
+  background: rgb(255 255 255 / 0.06);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    inset 0 0 0 1px rgb(255 255 255 / 0.06),
+    0 26px 50px -26px rgb(0 0 0 / 0.9);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ a case */
+
+.case {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  visibility: hidden;
+  transform-origin: 50% 0;
+}
+
+/* Back, as an iOS navigation bar says it: a chevron and where it goes. */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  margin-left: -10px;
+  padding: 0 14px 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.045);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  color: var(--bone-soft);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color 200ms var(--ease-out),
+    background-color 200ms var(--ease-out),
+    transform 450ms var(--ease-out);
+}
+
+.back:hover {
+  color: var(--bone);
+  background: rgb(255 255 255 / 0.08);
+}
+
+.back:active {
+  transform: scale(0.96);
+  transition-duration: 120ms;
+}
+
+.back:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 3px;
+}
+
+/* The row, grown: number, name and kind keep their places relative to each other. */
+.head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 14px;
+  row-gap: 6px;
+  align-items: start;
+  margin-top: 18px;
+}
+
+.discLarge {
+  grid-row: span 2;
+  width: 34px;
+  height: 34px;
+  margin-top: 3px;
+  font-size: 0.9375rem;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: clamp(1.8rem, 2.6vw, 2.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+}
+
+.title:focus {
+  outline: none;
+}
+
+.meta {
+  margin: 0;
+}
+
+.summary {
+  margin-top: 16px;
+}
+
+/* The facts, as an inset grouped list of labelled values. */
+.facts {
+  display: grid;
+  margin: 22px -24px 0;
+  padding: 6px 0;
+  border-radius: 32px;
+  background: rgb(255 255 255 / 0.045);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+}
+
+.fact {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 24px 14px;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+}
+
+.fact + .fact::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.fact dt {
+  color: var(--bone-soft);
+}
+
+.fact dd {
+  margin: 0;
+  color: var(--bone);
+  text-align: right;
+}
+
+.fact .measure {
+  font-size: 0.75rem;
+}
+
+.visit {
+  margin-top: 22px;
+}
+
+/* Up next: a platter, 8px in, that turns the case over to the next project. */
+.next {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% + 48px);
+  margin: 10px -24px 0;
+  padding: 12px 22px 12px 12px;
+  border: 0;
+  border-radius: 32px;
+  background: rgb(255 255 255 / 0.045);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  color: var(--bone);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 200ms var(--ease-out),
+    transform 450ms var(--ease-out);
+}
+
+.next .disc {
+  width: 36px;
+  height: 36px;
+  font-size: 0.8125rem;
+}
+
+.next .chevron {
+  color: var(--ash);
+}
+
+.next:hover {
+  background: rgb(255 255 255 / 0.07);
+}
+
+.next:active {
+  transform: scale(0.98);
+  transition-duration: 120ms;
+}
+
+.next:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: -4px;
+}
+
+.nextText {
+  display: grid;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.nextLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--bone-soft);
+}
+
+.nextName {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ------------------------------------------------------------------ compact */
+
+@media (max-width: 759px) {
+  .list,
+  .facts {
+    margin-inline: -14px;
+  }
+
+  .rowHit {
+    padding-inline: 14px 12px;
+  }
+
+  .row + .row::before {
+    left: 54px;
+    right: 14px;
+  }
+
+  .fact {
+    padding-inline: 14px;
+  }
+
+  .fact + .fact::before {
+    left: 14px;
+    right: 14px;
+  }
+
+  .next {
+    width: calc(100% + 28px);
+    margin-inline: -14px;
+  }
+
+  .back {
+    margin-left: -6px;
+  }
+}
+
+/* ------------------------------------------------------------------ calm */
+
+@media (prefers-reduced-motion: reduce) {
+  .rowHit,
+  .back,
+  .next {
+    transition: none;
+  }
+
+  .rowHit:active,
+  .back:active,
+  .next:active {
+    transform: none;
+  }
+}

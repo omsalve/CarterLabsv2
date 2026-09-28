@@ -1,26 +1,106 @@
 @import "tailwindcss";
 
+/*
+ * Onyx (headings) and Edwardian Script ITC (emphasis) are self-hosted from
+ * /public/fonts; an installed copy is preferred when present.
+ * Body text uses the Apple system face (SF Pro) with platform fallbacks.
+ */
+@font-face {
+  font-family: "CL Onyx";
+  src: local("Onyx"), url("/fonts/OPTIOnyx.otf") format("opentype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "CL Edwardian";
+  src: local("Edwardian Script ITC"), local("EdwardianScriptITC"),
+    url("/fonts/edwardianscriptitc.ttf") format("truetype");
+  font-display: swap;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --void: #000000;
+  --ink: #070606;
+  --ink-raised: #0d0b0b;
+  --bone: #ede6de;
+  --bone-soft: rgb(237 230 222 / 0.72);
+  --ash: #948a84;
+  --hairline: rgb(237 230 222 / 0.1);
+  --blood: #8a0c12;
+  --blood-deep: #5c070b;
+  --blood-lit: #c4202a;
+
+  --font-onyx: "CL Onyx", "Times New Roman", serif;
+  --font-script: "CL Edwardian", cursive;
+  --font-display: var(--font-onyx);
+  /* Multi-word subheads: bold SF Pro Display, iOS large-title style. */
+  --font-title: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue",
+    "Segoe UI", system-ui, sans-serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --font-measure: var(--font-geist-mono), ui-monospace, monospace;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--ink);
+  --color-foreground: var(--bone);
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-measure);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--void);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--void);
+  color: var(--bone);
+  font-family: var(--font-ui);
+}
+
+::selection {
+  background: var(--blood);
+  color: var(--bone);
+}
+
+:focus-visible {
+  outline: 1px solid var(--bone);
+  outline-offset: 4px;
+}
+
+* {
+  scrollbar-color: var(--blood-deep) var(--ink);
+  scrollbar-width: thin;
+}
+
+/* The intro plays from the top and holds the page still until it lands. Presses,
+   swipes and the wheel fly the descent, so the browser keeps its hands off them. */
+html[data-intro] {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Once landed, the page still never scrolls: the island's stack takes the wheel,
+   swipes and keys and turns its pages (components/island/Island.tsx). Pinch zoom
+   stays with the browser. */
+html[data-paging] {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: pinch-zoom;
+}
+
+/* the descent draws its own cursor (hero .ring) */
+@media (hover: hover) and (pointer: fine) {
+  html[data-intro="descend"] {
+    cursor: none;
+  }
 }

@@ -1,0 +1,548 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-09-28T14:50:21Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "way",
+  "id": 22860733,
+  "bounds": {
+    "minlat": 19.0605254,
+    "minlon": 72.8220795,
+    "maxlat": 19.0662171,
+    "maxlon": 72.8231732
+  },
+  "nodes": [
+    10882694910,
+    10882694913,
+    10882694911,
+    5342207142,
+    7298841992,
+    245666152,
+    8562956887,
+    8562956882,
+    245666185,
+    245666219,
+    2299496543,
+    13521149002,
+    347169478,
+    245666558,
+    245666631,
+    245666702,
+    7298841991,
+    245666776,
+    245666842,
+    347117451,
+    11482202251,
+    245666928,
+    7298841990,
+    2173732380
+  ],
+  "geometry": [
+    { "lat": 19.0605254, "lon": 72.8224989 },
+    { "lat": 19.0605567, "lon": 72.8224317 },
+    { "lat": 19.0606242, "lon": 72.8223273 },
+    { "lat": 19.0607024, "lon": 72.8222598 },
+    { "lat": 19.0607971, "lon": 72.8221977 },
+    { "lat": 19.0608909, "lon": 72.8221539 },
+    { "lat": 19.0610213, "lon": 72.8221228 },
+    { "lat": 19.0610574, "lon": 72.8221142 },
+    { "lat": 19.0611878, "lon": 72.8220831 },
+    { "lat": 19.0613258, "lon": 72.8220795 },
+    { "lat": 19.0620181, "lon": 72.8222494 },
+    { "lat": 19.0628293, "lon": 72.8224485 },
+    { "lat": 19.0630553, "lon": 72.8225040 },
+    { "lat": 19.0635199, "lon": 72.8226178 },
+    { "lat": 19.0637523, "lon": 72.8227151 },
+    { "lat": 19.0642089, "lon": 72.8229347 },
+    { "lat": 19.0643221, "lon": 72.8229953 },
+    { "lat": 19.0646851, "lon": 72.8230988 },
+    { "lat": 19.0650430, "lon": 72.8231661 },
+    { "lat": 19.0653658, "lon": 72.8231732 },
+    { "lat": 19.0655708, "lon": 72.8231601 },
+    { "lat": 19.0656434, "lon": 72.8231555 },
+    { "lat": 19.0658308, "lon": 72.8231183 },
+    { "lat": 19.0662171, "lon": 72.8229997 }
+  ],
+  "tags": {
+    "highway": "secondary",
+    "lanes": "4",
+    "lit": "yes",
+    "name": "Carter Road",
+    "name:en": "Carter Road",
+    "official_name": "Sangeet Samrat Naushad Ali Marg",
+    "official_name:en": "Sangeet Samrat Naushad Ali Marg",
+    "oneway": "yes",
+    "sidewalk": "right",
+    "sidewalk:right:kerb": "raised",
+    "sidewalk:right:surface": "paving_stones",
+    "surface": "concrete"
+  }
+},
+{
+  "type": "way",
+  "id": 46418220,
+  "bounds": {
+    "minlat": 19.0607923,
+    "minlon": 72.8217714,
+    "maxlat": 19.0721674,
+    "maxlon": 72.8230759
+  },
+  "nodes": [
+    2031470971,
+    2031470972,
+    2031470973,
+    2031470975,
+    593088338,
+    593088341,
+    8348411076,
+    593088345,
+    593088347,
+    593088349,
+    593088351,
+    593088353,
+    593088343,
+    2031470976,
+    2031470977,
+    593088355,
+    2031470981,
+    593088356,
+    593088359,
+    8289220860,
+    2031470984,
+    593088360,
+    6271845664,
+    2031470985,
+    593088363,
+    6271882285,
+    593088365,
+    6271845666,
+    6271845665,
+    7241601902,
+    593088367,
+    593088377
+  ],
+  "geometry": [
+    { "lat": 19.0607923, "lon": 72.8220739 },
+    { "lat": 19.0612099, "lon": 72.8219483 },
+    { "lat": 19.0614172, "lon": 72.8219515 },
+    { "lat": 19.0626911, "lon": 72.8222328 },
+    { "lat": 19.0629096, "lon": 72.8223353 },
+    { "lat": 19.0637177, "lon": 72.8225224 },
+    { "lat": 19.0637364, "lon": 72.8225322 },
+    { "lat": 19.0643660, "lon": 72.8228618 },
+    { "lat": 19.0647468, "lon": 72.8229862 },
+    { "lat": 19.0652233, "lon": 72.8230759 },
+    { "lat": 19.0655269, "lon": 72.8230739 },
+    { "lat": 19.0660739, "lon": 72.8229666 },
+    { "lat": 19.0667542, "lon": 72.8227605 },
+    { "lat": 19.0669097, "lon": 72.8226841 },
+    { "lat": 19.0669388, "lon": 72.8227066 },
+    { "lat": 19.0672888, "lon": 72.8225897 },
+    { "lat": 19.0677483, "lon": 72.8224638 },
+    { "lat": 19.0679014, "lon": 72.8224539 },
+    { "lat": 19.0683542, "lon": 72.8225275 },
+    { "lat": 19.0686033, "lon": 72.8226350 },
+    { "lat": 19.0687257, "lon": 72.8226879 },
+    { "lat": 19.0689811, "lon": 72.8227743 },
+    { "lat": 19.0694024, "lon": 72.8227315 },
+    { "lat": 19.0694691, "lon": 72.8227844 },
+    { "lat": 19.0698488, "lon": 72.8226725 },
+    { "lat": 19.0705239, "lon": 72.8222571 },
+    { "lat": 19.0706814, "lon": 72.8221602 },
+    { "lat": 19.0708970, "lon": 72.8220745 },
+    { "lat": 19.0711327, "lon": 72.8219958 },
+    { "lat": 19.0714058, "lon": 72.8219333 },
+    { "lat": 19.0716040, "lon": 72.8218880 },
+    { "lat": 19.0721674, "lon": 72.8217714 }
+  ],
+  "tags": {
+    "bicycle": "no",
+    "highway": "footway",
+    "horse": "no",
+    "lit": "yes",
+    "name": "Carter Rd Promenade",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 781757629,
+  "bounds": {
+    "minlat": 19.0691872,
+    "minlon": 72.8224336,
+    "maxlat": 19.0706160,
+    "maxlon": 72.8230260
+  },
+  "nodes": [
+    7298842020,
+    11036618783,
+    7298842021,
+    7298842022,
+    7298842023,
+    7298841994,
+    7298842024
+  ],
+  "geometry": [
+    { "lat": 19.0706160, "lon": 72.8224336 },
+    { "lat": 19.0701032, "lon": 72.8227068 },
+    { "lat": 19.0698482, "lon": 72.8228427 },
+    { "lat": 19.0696531, "lon": 72.8229305 },
+    { "lat": 19.0694813, "lon": 72.8229875 },
+    { "lat": 19.0693328, "lon": 72.8230152 },
+    { "lat": 19.0691872, "lon": 72.8230260 }
+  ],
+  "tags": {
+    "highway": "secondary",
+    "lanes": "4",
+    "lit": "yes",
+    "name": "Carter Road",
+    "name:en": "Carter Road",
+    "official_name": "Sangeet Samrat Naushad Ali Marg",
+    "official_name:en": "Sangeet Samrat Naushad Ali Marg",
+    "oneway": "yes",
+    "sidewalk": "right",
+    "sidewalk:right:kerb": "raised",
+    "sidewalk:right:surface": "paving_stones",
+    "source": "digitalglobe",
+    "surface": "concrete"
+  }
+},
+{
+  "type": "way",
+  "id": 891856244,
+  "bounds": {
+    "minlat": 19.0686033,
+    "minlon": 72.8210138,
+    "maxlat": 19.0691705,
+    "maxlon": 72.8226350
+  },
+  "nodes": [
+    8289220860,
+    8289220861,
+    8289220862,
+    8289220863,
+    8289220864,
+    8289220865,
+    8289220866,
+    8289220867,
+    8289220868,
+    8289220869,
+    8289220870,
+    8289220871,
+    8289220872,
+    8289220873,
+    8289220874,
+    8289220875,
+    8289220869
+  ],
+  "geometry": [
+    { "lat": 19.0686033, "lon": 72.8226350 },
+    { "lat": 19.0686332, "lon": 72.8225705 },
+    { "lat": 19.0686958, "lon": 72.8224526 },
+    { "lat": 19.0687533, "lon": 72.8223440 },
+    { "lat": 19.0688065, "lon": 72.8222115 },
+    { "lat": 19.0688443, "lon": 72.8221461 },
+    { "lat": 19.0689040, "lon": 72.8219073 },
+    { "lat": 19.0689433, "lon": 72.8216431 },
+    { "lat": 19.0689907, "lon": 72.8214020 },
+    { "lat": 19.0690984, "lon": 72.8210939 },
+    { "lat": 19.0691370, "lon": 72.8210985 },
+    { "lat": 19.0691676, "lon": 72.8210646 },
+    { "lat": 19.0691705, "lon": 72.8210338 },
+    { "lat": 19.0691392, "lon": 72.8210161 },
+    { "lat": 19.0691086, "lon": 72.8210138 },
+    { "lat": 19.0690875, "lon": 72.8210392 },
+    { "lat": 19.0690984, "lon": 72.8210939 }
+  ],
+  "tags": {
+    "embankment": "yes",
+    "highway": "footway",
+    "name": "Carter Causeway",
+    "surface": "concrete",
+    "width": "3"
+  }
+},
+{
+  "type": "way",
+  "id": 1148387713,
+  "bounds": {
+    "minlat": 19.0605900,
+    "minlon": 72.8221834,
+    "maxlat": 19.0630370,
+    "maxlon": 72.8225953
+  },
+  "nodes": [
+    7298842041,
+    13521149003,
+    7298842042,
+    7298842043,
+    7298842044,
+    11061072625,
+    7298842045,
+    7298842046,
+    10882694909,
+    10882694912,
+    10882694914,
+    10598764750
+  ],
+  "geometry": [
+    { "lat": 19.0630370, "lon": 72.8225953 },
+    { "lat": 19.0628077, "lon": 72.8225389 },
+    { "lat": 19.0620035, "lon": 72.8223411 },
+    { "lat": 19.0614936, "lon": 72.8222157 },
+    { "lat": 19.0613247, "lon": 72.8221834 },
+    { "lat": 19.0612301, "lon": 72.8221854 },
+    { "lat": 19.0611820, "lon": 72.8221864 },
+    { "lat": 19.0609044, "lon": 72.8222481 },
+    { "lat": 19.0607468, "lon": 72.8223403 },
+    { "lat": 19.0607214, "lon": 72.8223643 },
+    { "lat": 19.0606274, "lon": 72.8224644 },
+    { "lat": 19.0605900, "lon": 72.8225405 }
+  ],
+  "tags": {
+    "highway": "secondary",
+    "lanes": "4",
+    "lit": "yes",
+    "name": "Carter Road",
+    "name:en": "Carter Road",
+    "official_name": "Sangeet Samrat Naushad Ali Marg",
+    "official_name:en": "Sangeet Samrat Naushad Ali Marg",
+    "oneway": "yes",
+    "sidewalk": "right",
+    "sidewalk:right:kerb": "raised",
+    "sidewalk:right:surface": "paving_stones",
+    "source": "digitalglobe",
+    "surface": "concrete"
+  }
+},
+{
+  "type": "way",
+  "id": 1148389507,
+  "bounds": {
+    "minlat": 19.0630370,
+    "minlon": 72.8225953,
+    "maxlat": 19.0662431,
+    "maxlon": 72.8232617
+  },
+  "nodes": [
+    348125911,
+    7298842032,
+    8657576838,
+    11041728467,
+    7298842033,
+    7298842034,
+    7298842035,
+    7298842036,
+    7298842038,
+    7298842039,
+    7298842040,
+    11482202229,
+    7298842041
+  ],
+  "geometry": [
+    { "lat": 19.0662431, "lon": 72.8231108 },
+    { "lat": 19.0656899, "lon": 72.8232371 },
+    { "lat": 19.0656335, "lon": 72.8232426 },
+    { "lat": 19.0655822, "lon": 72.8232475 },
+    { "lat": 19.0655472, "lon": 72.8232509 },
+    { "lat": 19.0653666, "lon": 72.8232617 },
+    { "lat": 19.0651963, "lon": 72.8232602 },
+    { "lat": 19.0646830, "lon": 72.8231740 },
+    { "lat": 19.0642542, "lon": 72.8230477 },
+    { "lat": 19.0639099, "lon": 72.8228673 },
+    { "lat": 19.0636842, "lon": 72.8227588 },
+    { "lat": 19.0634632, "lon": 72.8226863 },
+    { "lat": 19.0630370, "lon": 72.8225953 }
+  ],
+  "tags": {
+    "highway": "secondary",
+    "lanes": "4",
+    "lit": "yes",
+    "name": "Carter Road",
+    "name:en": "Carter Road",
+    "official_name": "Sangeet Samrat Naushad Ali Marg",
+    "official_name:en": "Sangeet Samrat Naushad Ali Marg",
+    "oneway": "yes",
+    "sidewalk": "right",
+    "sidewalk:right:kerb": "raised",
+    "sidewalk:right:surface": "paving_stones",
+    "source": "digitalglobe",
+    "surface": "concrete"
+  }
+},
+{
+  "type": "way",
+  "id": 1148389509,
+  "bounds": {
+    "minlat": 19.0662171,
+    "minlon": 72.8227161,
+    "maxlat": 19.0671508,
+    "maxlon": 72.8229997
+  },
+  "nodes": [
+    2173732380,
+    348126302
+  ],
+  "geometry": [
+    { "lat": 19.0662171, "lon": 72.8229997 },
+    { "lat": 19.0671508, "lon": 72.8227161 }
+  ],
+  "tags": {
+    "highway": "secondary",
+    "lanes": "4",
+    "lit": "yes",
+    "name": "Carter Road",
+    "name:en": "Carter Road",
+    "official_name": "Sangeet Samrat Naushad Ali Marg",
+    "official_name:en": "Sangeet Samrat Naushad Ali Marg",
+    "oneway": "yes",
+    "sidewalk": "right",
+    "sidewalk:right:kerb": "raised",
+    "sidewalk:right:surface": "paving_stones",
+    "surface": "concrete"
+  }
+},
+{
+  "type": "way",
+  "id": 1148389834,
+  "bounds": {
+    "minlat": 19.0662431,
+    "minlon": 72.8228196,
+    "maxlat": 19.0671954,
+    "maxlon": 72.8231108
+  },
+  "nodes": [
+    7298842031,
+    348125911
+  ],
+  "geometry": [
+    { "lat": 19.0671954, "lon": 72.8228196 },
+    { "lat": 19.0662431, "lon": 72.8231108 }
+  ],
+  "tags": {
+    "highway": "secondary",
+    "lanes": "4",
+    "lit": "yes",
+    "name": "Carter Road",
+    "name:en": "Carter Road",
+    "official_name": "Sangeet Samrat Naushad Ali Marg",
+    "official_name:en": "Sangeet Samrat Naushad Ali Marg",
+    "oneway": "yes",
+    "sidewalk": "right",
+    "sidewalk:right:kerb": "raised",
+    "sidewalk:right:surface": "paving_stones",
+    "source": "digitalglobe",
+    "surface": "concrete"
+  }
+},
+{
+  "type": "way",
+  "id": 1148389835,
+  "bounds": {
+    "minlat": 19.0671508,
+    "minlon": 72.8223533,
+    "maxlat": 19.0705676,
+    "maxlon": 72.8229418
+  },
+  "nodes": [
+    348126302,
+    245667167,
+    245667207,
+    6271853071,
+    347117307,
+    6271853072,
+    245667266,
+    347117309,
+    245667395,
+    3803075012,
+    7298841995,
+    347117312,
+    245667478,
+    245667551
+  ],
+  "geometry": [
+    { "lat": 19.0671508, "lon": 72.8227161 },
+    { "lat": 19.0675562, "lon": 72.8225972 },
+    { "lat": 19.0677646, "lon": 72.8225474 },
+    { "lat": 19.0679567, "lon": 72.8225423 },
+    { "lat": 19.0680672, "lon": 72.8225596 },
+    { "lat": 19.0681825, "lon": 72.8225810 },
+    { "lat": 19.0683093, "lon": 72.8226206 },
+    { "lat": 19.0687992, "lon": 72.8228218 },
+    { "lat": 19.0689414, "lon": 72.8228777 },
+    { "lat": 19.0692142, "lon": 72.8229418 },
+    { "lat": 19.0693707, "lon": 72.8229265 },
+    { "lat": 19.0695119, "lon": 72.8228910 },
+    { "lat": 19.0698962, "lon": 72.8227283 },
+    { "lat": 19.0705676, "lon": 72.8223533 }
+  ],
+  "tags": {
+    "highway": "secondary",
+    "lanes": "4",
+    "lit": "yes",
+    "name": "Carter Road",
+    "name:en": "Carter Road",
+    "official_name": "Sangeet Samrat Naushad Ali Marg",
+    "official_name:en": "Sangeet Samrat Naushad Ali Marg",
+    "oneway": "yes",
+    "sidewalk": "right",
+    "sidewalk:right:kerb": "raised",
+    "sidewalk:right:surface": "paving_stones",
+    "surface": "concrete"
+  }
+},
+{
+  "type": "way",
+  "id": 1148393953,
+  "bounds": {
+    "minlat": 19.0671954,
+    "minlon": 72.8226378,
+    "maxlat": 19.0691872,
+    "maxlon": 72.8230260
+  },
+  "nodes": [
+    7298842024,
+    7298842025,
+    7298842026,
+    7298842027,
+    7298842028,
+    7298842029,
+    7298842030,
+    11482202257,
+    7298842031
+  ],
+  "geometry": [
+    { "lat": 19.0691872, "lon": 72.8230260 },
+    { "lat": 19.0690969, "lon": 72.8230183 },
+    { "lat": 19.0689702, "lon": 72.8229906 },
+    { "lat": 19.0682350, "lon": 72.8227241 },
+    { "lat": 19.0680268, "lon": 72.8226609 },
+    { "lat": 19.0678753, "lon": 72.8226378 },
+    { "lat": 19.0677035, "lon": 72.8226609 },
+    { "lat": 19.0674638, "lon": 72.8227358 },
+    { "lat": 19.0671954, "lon": 72.8228196 }
+  ],
+  "tags": {
+    "highway": "secondary",
+    "lanes": "4",
+    "lit": "yes",
+    "name": "Carter Road",
+    "name:en": "Carter Road",
+    "official_name": "Sangeet Samrat Naushad Ali Marg",
+    "official_name:en": "Sangeet Samrat Naushad Ali Marg",
+    "oneway": "yes",
+    "sidewalk": "right",
+    "sidewalk:right:kerb": "raised",
+    "sidewalk:right:surface": "paving_stones",
+    "source": "digitalglobe",
+    "surface": "concrete"
+  }
+}
+
+  ]
+}

@@ -1,0 +1,373 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-28T15:51:37.507Z",
+  "title": "Design System: CarterLabs",
+  "extensions": {
+    "colorMeta": {
+      "blood": {
+        "role": "primary",
+        "displayName": "Blood",
+        "canonical": "#8a0c12",
+        "tonalRamp": [
+          "#1f0304",
+          "#3a0508",
+          "#5c070b",
+          "#8a0c12",
+          "#b3151e",
+          "#d6404a",
+          "#ec8d92",
+          "#f8d5d7"
+        ]
+      },
+      "blood-lit": {
+        "role": "primary",
+        "displayName": "Lit Blood",
+        "canonical": "#c4202a",
+        "tonalRamp": [
+          "#26050a",
+          "#4a0a10",
+          "#7a1017",
+          "#a3111a",
+          "#c4202a",
+          "#dc5058",
+          "#ee9398",
+          "#fad9db"
+        ]
+      },
+      "blood-deep": {
+        "role": "primary",
+        "displayName": "Deep Blood",
+        "canonical": "#5c070b",
+        "tonalRamp": [
+          "#140102",
+          "#2a0306",
+          "#43050a",
+          "#5c070b",
+          "#7e0c12",
+          "#a8313a",
+          "#d57f86",
+          "#f3d0d3"
+        ]
+      },
+      "bone": {
+        "role": "neutral",
+        "displayName": "Bone",
+        "canonical": "#ede6de",
+        "tonalRamp": [
+          "#1c1a18",
+          "#3b3733",
+          "#5e5852",
+          "#837b74",
+          "#a8a098",
+          "#c8c0b8",
+          "#ede6de",
+          "#f8f5f1"
+        ]
+      },
+      "ash": {
+        "role": "neutral",
+        "displayName": "Ash",
+        "canonical": "#948a84",
+        "tonalRamp": [
+          "#1d1b1a",
+          "#3a3634",
+          "#5a5451",
+          "#7a716c",
+          "#948a84",
+          "#b0a8a3",
+          "#cdc7c3",
+          "#ebe8e6"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#070606",
+        "tonalRamp": [
+          "#000000",
+          "#070606",
+          "#0d0a0a",
+          "#151111",
+          "#1c1616",
+          "#2a2221",
+          "#3b3230",
+          "#544946"
+        ]
+      },
+      "void": {
+        "role": "neutral",
+        "displayName": "Void",
+        "canonical": "#000000"
+      },
+      "map-ground": {
+        "role": "neutral",
+        "displayName": "Map Ground",
+        "canonical": "#0d0a0a"
+      },
+      "map-water": {
+        "role": "neutral",
+        "displayName": "Map Water",
+        "canonical": "#030304"
+      },
+      "map-vein": {
+        "role": "primary",
+        "displayName": "Vein",
+        "canonical": "#6e0e14"
+      },
+      "map-building": {
+        "role": "neutral",
+        "displayName": "Building",
+        "canonical": "#1c1616"
+      },
+      "glass-fill": {
+        "role": "neutral",
+        "displayName": "Glass Fill",
+        "canonical": "rgb(255 255 255 / 0.045)"
+      },
+      "glass-raised": {
+        "role": "neutral",
+        "displayName": "Glass Raised",
+        "canonical": "rgb(255 255 255 / 0.07)"
+      },
+      "glass-edge": {
+        "role": "neutral",
+        "displayName": "Glass Edge",
+        "canonical": "rgb(255 255 255 / 0.08)"
+      },
+      "glass-highlight": {
+        "role": "neutral",
+        "displayName": "Glass Highlight",
+        "canonical": "rgb(255 255 255 / 0.12)"
+      },
+      "glass-rim": {
+        "role": "neutral",
+        "displayName": "Glass Rim",
+        "canonical": "rgb(255 255 255 / 0.16)"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Wordmark",
+        "purpose": "The CARTERLABS name only; fills the island's inner width."
+      },
+      "headline": {
+        "displayName": "Cinematic line",
+        "purpose": "Single centred lines on black, set in Onyx."
+      },
+      "title": {
+        "displayName": "Statement",
+        "purpose": "Onyx statements inside the island, carrying one script word."
+      },
+      "script": {
+        "displayName": "Signature",
+        "purpose": "The word a sentence turns on, in Lit Blood."
+      },
+      "place": {
+        "displayName": "Place",
+        "purpose": "Map callouts and pin names, uppercase, widely tracked."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Island prose, max 36ch."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Capsule labels, sentence case."
+      },
+      "ui": {
+        "displayName": "UI",
+        "purpose": "Status row and platter titles."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Small capsules such as Skip intro."
+      },
+      "measure": {
+        "displayName": "Measure",
+        "purpose": "Coordinates, altitude, scale. Real measurements only."
+      },
+      "fine": {
+        "displayName": "Fine print",
+        "purpose": "Map attribution only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "glass-shadow",
+        "value": "GL: shape offset 26px down, softened over 70px, 50% black; plus a 12px contact shadow at 40%",
+        "purpose": "Under the island and page control."
+      },
+      {
+        "name": "capsule-seat",
+        "value": "0 14px 30px -16px rgb(0 0 0 / 0.95)",
+        "purpose": "The primary capsule."
+      },
+      {
+        "name": "legibility-halo",
+        "value": "text-shadow: 0 0 14px rgb(0 0 0 / 0.95), 0 0 3px rgb(0 0 0 / 0.9)",
+        "purpose": "Callout and pin text over busy map."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "All content reveals and control feedback."
+      },
+      {
+        "name": "ease-in-out",
+        "value": "cubic-bezier(0.65, 0, 0.35, 1)",
+        "purpose": "Scene-level fades."
+      },
+      {
+        "name": "island-spring",
+        "value": "response 0.6s, damping 0.76-0.8 (x, y, width, height)",
+        "purpose": "Pill to island expansion and page morphs."
+      },
+      {
+        "name": "pop-spring",
+        "value": "response 0.46s, damping 0.6 (scale 0.62 to 1)",
+        "purpose": "The pill appearing."
+      },
+      {
+        "name": "camera-descent",
+        "value": "flyTo 6400ms, curve 1.3, easeInOutCubic",
+        "purpose": "City to Carter Road."
+      },
+      {
+        "name": "parallax",
+        "value": "k = 1 - exp(-2.2 dt); +/-2.6deg bearing, +/-2.2deg pitch; island -7/-5px",
+        "purpose": "Cursor-driven depth (fine pointers only)."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "759px",
+        "purpose": "Island becomes a bottom island inset 10px; scale and altitude hide."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Capsule",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one action: a lit blood capsule with an arrow well.",
+      "html": "<a class=\"ds-capsule\" href=\"#\">Explore the work<span class=\"ds-capsule-well\"><svg viewBox=\"0 0 16 16\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"M3 8h9.5M8.5 3.5 13 8l-4.5 4.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></span></a>",
+      "css": ".ds-capsule { display: inline-flex; align-items: center; gap: 14px; height: 50px; padding: 0 8px 0 22px; border-radius: 999px; background: linear-gradient(180deg, #b5161f 0%, #8e0c13 55%, #7a0a10 100%); color: #ede6de; font-family: Geist, system-ui, sans-serif; font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.005em; text-decoration: none; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), inset 0 -1px 0 rgb(0 0 0 / 0.28), inset 0 0 0 1px rgb(255 255 255 / 0.06), 0 14px 30px -16px rgb(0 0 0 / 0.95); transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1), filter 300ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-capsule-well { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgb(0 0 0 / 0.24); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12); } .ds-capsule svg { transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-capsule:hover { filter: brightness(1.12); } .ds-capsule:hover svg { transform: translateX(2px); } .ds-capsule:active { transform: scale(0.965); transition-duration: 120ms; } .ds-capsule:focus-visible { outline: 2px solid #ede6de; outline-offset: 3px; }"
+    },
+    {
+      "name": "Island (CSS fallback glass)",
+      "kind": "card",
+      "refersTo": "island",
+      "description": "The single container. In the product it is refracting glass drawn in WebGL; this is its CSS fallback.",
+      "html": "<div class=\"ds-island\"><div class=\"ds-status\"><span class=\"ds-live\"><span class=\"ds-dot\"></span>Bandra, Mumbai</span><span class=\"ds-time\">21:12 IST</span></div><p class=\"ds-title\">Built in <span class=\"ds-script\">Bandra</span>, designed for impact.</p><p class=\"ds-body\">We design and build high-quality digital experiences for brands that want to stand out.</p></div>",
+      "css": ".ds-island { max-width: 34rem; padding: 12px 32px 32px; border-radius: 40px; color: #ede6de; background: linear-gradient(180deg, rgb(40 32 32 / 0.5), rgb(14 11 11 / 0.62)); backdrop-filter: blur(24px) saturate(160%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), inset 0 0 0 1px rgb(255 255 255 / 0.07), 0 34px 70px -26px rgb(0 0 0 / 0.85); } .ds-status { display: flex; justify-content: space-between; align-items: center; height: 44px; font-family: Geist, system-ui, sans-serif; font-size: 0.8125rem; font-weight: 500; } .ds-live { display: inline-flex; align-items: center; gap: 9px; } .ds-dot { width: 7px; height: 7px; border-radius: 50%; background: #c4202a; box-shadow: 0 0 0 3px rgb(196 32 42 / 0.2); } .ds-time { color: rgb(237 230 222 / 0.72); font-variant-numeric: tabular-nums; } .ds-title { margin: 14px 0 0; font-family: Onyx, Oranienbaum, 'Times New Roman', serif; font-size: 1.9rem; line-height: 1.15; } .ds-script { font-family: 'Edwardian Script ITC', 'Pinyon Script', cursive; font-size: 1.75em; line-height: 0.5; color: #c4202a; } .ds-body { margin: 14px 0 0; max-width: 36ch; font-family: Geist, system-ui, sans-serif; font-size: 0.975rem; line-height: 1.6; color: rgb(237 230 222 / 0.72); }"
+    },
+    {
+      "name": "Platter",
+      "kind": "custom",
+      "refersTo": "platter",
+      "description": "Concentric light-on-glass group for related facts (radius 32 = 40 - 8).",
+      "html": "<div class=\"ds-platter\"><span class=\"ds-well\"><svg viewBox=\"0 0 16 16\" width=\"16\" height=\"16\" aria-hidden=\"true\"><path d=\"M8 14.5s4.75-4.2 4.75-8A4.75 4.75 0 0 0 3.25 6.5c0 3.8 4.75 8 4.75 8Z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.3\" stroke-linejoin=\"round\"/><circle cx=\"8\" cy=\"6.5\" r=\"1.6\" fill=\"currentColor\"/></svg></span><span class=\"ds-platter-text\"><span class=\"ds-platter-title\">Carter Road, Bandra West</span><span class=\"ds-platter-meta\">19.0664° N · 72.8229° E</span></span></div>",
+      "css": ".ds-platter { display: flex; align-items: center; gap: 12px; max-width: 30rem; padding: 12px 18px 12px 12px; border-radius: 32px; background: rgb(255 255 255 / 0.045); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05); color: #ede6de; } .ds-well { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: rgb(255 255 255 / 0.07); } .ds-platter-text { display: grid; gap: 4px; } .ds-platter-title { font-family: Geist, system-ui, sans-serif; font-size: 0.8125rem; font-weight: 500; } .ds-platter-meta { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.6875rem; letter-spacing: 0.06em; color: #948a84; }"
+    },
+    {
+      "name": "Skip Capsule",
+      "kind": "button",
+      "refersTo": "skip-control",
+      "description": "Small glass capsule with a progress line along its lower edge.",
+      "html": "<button class=\"ds-skip\" type=\"button\">Skip intro<span class=\"ds-skip-fill\"></span></button>",
+      "css": ".ds-skip { position: relative; overflow: hidden; padding: 10px 16px 11px; border: 0; border-radius: 999px; background: rgb(255 255 255 / 0.045); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(255 255 255 / 0.08); color: rgb(237 230 222 / 0.72); font-family: Geist, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; cursor: pointer; } .ds-skip:hover { color: #ede6de; background: rgb(255 255 255 / 0.08); } .ds-skip-fill { position: absolute; left: 16px; right: 16px; bottom: 4px; height: 1px; background: rgb(237 230 222 / 0.5); transform: scaleX(0.4); transform-origin: left; }"
+    },
+    {
+      "name": "Map Callout",
+      "kind": "custom",
+      "refersTo": "place",
+      "description": "A place hung from its true coordinate: dot, hairline leader, Onyx name, mono coordinates.",
+      "html": "<div class=\"ds-callout\"><span class=\"ds-callout-text\"><span class=\"ds-callout-name\">Bandra</span><span class=\"ds-callout-coord\">19.060° N · 72.832° E</span></span><span class=\"ds-callout-leader\"></span><span class=\"ds-callout-dot\"></span></div>",
+      "css": ".ds-callout { display: inline-flex; align-items: center; gap: 10px; padding: 24px; background: #0d0a0a; } .ds-callout-text { display: grid; gap: 5px; text-align: right; } .ds-callout-name { font-family: Onyx, Oranienbaum, 'Times New Roman', serif; font-size: 1.5rem; line-height: 1; letter-spacing: 0.28em; text-transform: uppercase; color: #ede6de; } .ds-callout-coord { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.625rem; letter-spacing: 0.1em; color: #948a84; } .ds-callout-leader { width: 44px; height: 1px; background: linear-gradient(to left, rgb(237 230 222 / 0.55), rgb(237 230 222 / 0.12)); } .ds-callout-dot { width: 6px; height: 6px; border-radius: 50%; background: #ede6de; box-shadow: 0 0 0 5px rgb(237 230 222 / 0.07); }"
+    },
+    {
+      "name": "Studio Pin",
+      "kind": "custom",
+      "refersTo": "blood-lit",
+      "description": "The one red point on the map, with a slow pulse and a signed label.",
+      "html": "<div class=\"ds-pin\"><span class=\"ds-pin-name\">Carter Road</span><span class=\"ds-pin-note\">The studio</span><span class=\"ds-pin-leader\"></span><span class=\"ds-pin-dot\"></span></div>",
+      "css": ".ds-pin { display: inline-grid; justify-items: start; padding: 24px; background: #0d0a0a; } .ds-pin-name { font-family: Onyx, Oranienbaum, 'Times New Roman', serif; font-size: 1.3rem; letter-spacing: 0.28em; text-transform: uppercase; color: #ede6de; line-height: 1; } .ds-pin-note { font-family: 'Edwardian Script ITC', 'Pinyon Script', cursive; font-size: 2rem; line-height: 0.9; color: #c4202a; } .ds-pin-leader { width: 1px; height: 56px; margin: 12px 0 4px 3px; background: linear-gradient(to top, rgb(237 230 222 / 0.6), rgb(237 230 222 / 0.1)); } .ds-pin-dot { width: 8px; height: 8px; border-radius: 50%; background: #c4202a; box-shadow: 0 0 14px 2px rgb(196 32 42 / 0.5); }"
+    },
+    {
+      "name": "Measure Readout",
+      "kind": "custom",
+      "refersTo": "measure",
+      "description": "HUD measurement: coordinates, altitude, IST clock.",
+      "html": "<div class=\"ds-measure\"><span>19.0622° N   72.8262° E</span><span>ALT 1.9 KM</span></div>",
+      "css": ".ds-measure { display: grid; gap: 6px; padding: 20px; background: #000; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: #948a84; font-variant-numeric: tabular-nums; white-space: pre; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Night Survey, seen through glass",
+    "overview": "CarterLabs presents itself the way a surveyor sees a city at night: from altitude, in near-darkness, with only the structure that matters picked out. The ground is almost black. Mumbai's arteries are traced in a dim blood red, its hills in red contour lines from real elevation data, and Bandra's coast in bone-white surf that moves. Every mark on the map comes from OpenStreetMap or the terrain model. The map is the ground of the whole site: it never scrolls away. Over it floats one object: the island, a slab of liquid glass that carries all the content. It bends the map at its rim, frosts it in its body, and catches light on its edge from wherever the pointer is. It arrives as a Dynamic-Island pill (a live status: place and Mumbai time), springs open, and reshapes itself to fit each page as the visitor scrolls. The map is the world; the island is the instrument you read it through. Type carries the emotion. A tall condensed Didone (Onyx) speaks, a copperplate script (Edwardian) signs the word a sentence turns on, and a wide black grotesk (Archivo Expanded) says the name. Everything the hand touches, such as buttons, status and addresses, speaks the platform's quiet sentence-case sans (Geist). Measurements are set in a small tracked mono.",
+    "keyCharacteristics": [
+      "A fixed, living map as the only background; scroll changes the island, never the world.",
+      "One liquid-glass island: refraction at the rim, frost in the body, pointer-lit specular edge, soft shadow.",
+      "Continuous corners and concentric insets; capsules for every control.",
+      "Blood red reserved for the story's turning points: the script word, the studio pin, the one action.",
+      "Motion as physics: springs for geometry, exponential ease-out for content."
+    ],
+    "rules": [
+      {
+        "name": "The Turning-Point Rule",
+        "body": "Blood red marks where the story turns: the script word, the live dot, the studio pin, the single primary action. If two red things compete on one screen, one of them is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Glass Is Light Rule",
+        "body": "Glass is never filled with a colour. Its presence comes from refraction, frost, rim light and shadow; any tint is darkness for legibility, never hue.",
+        "section": "colors"
+      },
+      {
+        "name": "The Signature Rule",
+        "body": "Script appears inside a line of Onyx, in Lit Blood, on the word the sentence turns on. Never set script alone, in bone, or at body size.",
+        "section": "typography"
+      },
+      {
+        "name": "The Two Registers Rule",
+        "body": "Brand faces (Onyx, Edwardian, Archivo) say things; Geist does things. Controls, status and addresses are always Geist, in sentence case.",
+        "section": "typography"
+      },
+      {
+        "name": "The Measure Rule",
+        "body": "Mono is only for numbers that measure something real. It is never used for flavour.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Glass Rule",
+        "body": "There is one piece of liquid glass on screen, plus its page control. Content inside it does not become glass again. Platters are light on glass, not glass on glass.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Black Shadow Rule",
+        "body": "Shadows are black and fall downward. The only red light is the pin and the live dot.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep the map fixed; new sections are new island pages (`components/island/pages.tsx`), never new scrolling panels.",
+      "Do keep radii concentric: inner radius = island radius (40px) minus the inset.",
+      "Do use capsules for every control, and set their labels in Geist sentence case.",
+      "Do animate geometry with springs and content with exponential ease-out (`cubic-bezier(0.16, 1, 0.3, 1)`).",
+      "Do credit the map: © OpenStreetMap, OpenFreeMap, Mapzen terrain.",
+      "Do honour `prefers-reduced-motion`: the island appears open, and the surf and parallax are still."
+    ],
+    "donts": [
+      "Don't nest glass in glass or put square cards inside the island.",
+      "Don't colour the glass; tint is darkness for legibility, never hue.",
+      "Don't use bezier overshoot or bounce easing; the springs already carry the life.",
+      "Don't set Edwardian or Onyx at body sizes, or script in bone.",
+      "Don't add eyebrows or kickers above headings.",
+      "Don't use cool greys or blue-blacks for neutrals."
+    ]
+  }
+}
