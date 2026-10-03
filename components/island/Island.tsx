@@ -30,7 +30,10 @@ import type { IslandFrame, IslandHandle, IslandPage, IslandScene } from "./types
  * A page can reach out of the glass: an element marked `data-thread` sends a
  * hairline from itself to the studio pin on the map (the About page's "place.").
  * The thread follows how present its page is, through a slower spring of its own,
- * so it scrubs with the stack but trails it like a cable.
+ * so it scrubs with the stack but trails it like a cable. While the element says
+ * `data-thread="wait"` the thread holds back, so a page can hand it over when it is
+ * ready (the About page's nib writes its word first). How far it has touched down
+ * goes to the scene, and the place answers (the hero).
  */
 
 const PILL_H = 44;
@@ -68,6 +71,9 @@ const THREAD = {
   clear: 28, // the pin must stand at least this far clear of the glass
   land: 7, // the thread stops short of the pin's centre by this much
 };
+
+/** "Show me" on the Team page: the stack peeks this far at the next page, holds, and settles back. */
+const PEEK = { depth: 0.28, hold: 460 };
 
 /** The first reveal, per child of the opening page: delays in ms. */
 const ENTRY_DELAYS = [40, 150, 240, 330, 420, 500];
@@ -513,7 +519,8 @@ const Island = forwardRef<IslandHandle, Props>(function Island({ pages, open, re
       if (e.target instanceof Element && e.target.closest('[role="tab"]')) tabRefs.current[dest]?.focus();
     };
 
-    const pageFor = (hash: string) => pages.findIndex((pg) => hash === `#${pg.id}`);
+    // a page's own anchor, or one inside it (#team/<id> opens a profile on the Team page)
+    const pageFor = (hash: string) => pages.findIndex((pg) => hash === `#${pg.id}` || hash.startsWith(`#${pg.id}/`));
 
     const onClick = (e: MouseEvent) => {
       if (e.timeStamp < swallowUntil) {
@@ -566,8 +573,12 @@ const Island = forwardRef<IslandHandle, Props>(function Island({ pages, open, re
     let threadShown = false;
     let touch = -1;
 
-    /** How far the thread has touched down, 0..1: the pin swells and the word glows with it. */
-    const setTouch = (v: number) => {
+    /**
+     * How far the thread has touched down, 0..1: the pin swells and the word glows
+     * with it (`v`), and the place answers once it has landed (`landed`, the scene's).
+     */
+    const setTouch = (v: number, landed = v) => {
+      world.touch = landed;
       if (Math.abs(v - touch) < 0.002) return;
       touch = v;
       world.pin?.style.setProperty("--thread", v.toFixed(3));
@@ -620,8 +631,10 @@ const Island = forwardRef<IslandHandle, Props>(function Island({ pages, open, re
         held = null;
         thread.jump(0);
       }
+      // its page may hold it back until it hands it over (the About page's nib)
+      const waiting = threadFrom?.dataset.thread === "wait";
       // reduced motion: the thread cross-fades with its page instead of drawing out
-      let aim = revealed && !receding ? smooth(reduced ? 0.5 : THREAD.from, 1, present) : 0;
+      let aim = revealed && !receding && !waiting ? smooth(reduced ? 0.5 : THREAD.from, 1, present) : 0;
       const path = held ?? (aim > 0 || thread.value > 0.001 ? route(g, compact) : null);
       if (!held) lastRoute = path;
       if (!path) aim = 0;
@@ -657,7 +670,7 @@ const Island = forwardRef<IslandHandle, Props>(function Island({ pages, open, re
         head.setAttribute("cy", at.y.toFixed(2));
         head.style.opacity = (held ? smooth(0, 0.1, drawn) : (1 - contact) * smooth(0, 0.04, drawn)).toFixed(3);
       }
-      setTouch(reduced ? thread.value * 0.5 : contact);
+      setTouch(reduced ? thread.value * 0.5 : contact, reduced ? thread.value : contact);
     };
 
     // ---------------------------------------------------------------- open
@@ -694,6 +707,29 @@ const Island = forwardRef<IslandHandle, Props>(function Island({ pages, open, re
         }, 1050),
       );
     }
+
+    // ---------------------------------------------------------------- "Show me" (the Team page)
+    // The Frontend Lead's part: the stack peeks at the next page, like a widget
+    // stack showing what's under it, and springs back. The Design Director's: one
+    // lap of light round the glass (a flash of the rim, where the glass is CSS).
+    let peekTimer = 0;
+    world.demos.stack = () => {
+      if (!revealed || !paging || drag.id >= 0 || wheel.live) return;
+      const dir = dest < n - 1 ? 1 : -1;
+      pos.response = reduced ? 0.34 : 0.5;
+      pos.damping = reduced ? 1 : 0.86;
+      pos.target = (dest + dir * PEEK.depth) * 100;
+      lastMove = performance.now();
+      clearTimeout(peekTimer);
+      peekTimer = window.setTimeout(() => settle(dest), PEEK.hold);
+    };
+    world.demos.glass = () => {
+      if (!revealed) return;
+      if (glassMode === "gl") return world.glass?.sweep(reduced);
+      delete el.dataset.sweep;
+      void el.offsetWidth; // restart the flash
+      el.dataset.sweep = "on";
+    };
 
     const onResize = () => {
       measureAll();
@@ -824,6 +860,9 @@ const Island = forwardRef<IslandHandle, Props>(function Island({ pages, open, re
       cancelAnimationFrame(raf);
       timers.forEach(clearTimeout);
       clearTimeout(wheel.timer);
+      clearTimeout(peekTimer);
+      delete world.demos.stack;
+      delete world.demos.glass;
       input.abort();
       delete html.dataset.paging;
       window.removeEventListener("resize", onResize);
@@ -843,6 +882,7 @@ const Island = forwardRef<IslandHandle, Props>(function Island({ pages, open, re
         ref={islandRef}
         className={s.island}
         data-state="hidden"
+        data-teardown="stack"
         inert={!open}
         role="region"
         aria-label="CarterLabs"
@@ -876,7 +916,7 @@ const Island = forwardRef<IslandHandle, Props>(function Island({ pages, open, re
         </div>
       </div>
 
-      <svg ref={threadRef} className={s.thread} aria-hidden="true">
+      <svg ref={threadRef} className={s.thread} aria-hidden="true" data-teardown="stack">
         <defs>
           <linearGradient id="cl-thread" gradientUnits="userSpaceOnUse">
             <stop offset="0" style={{ stopColor: "var(--bone)", stopOpacity: 0.62 }} />
@@ -890,7 +930,14 @@ const Island = forwardRef<IslandHandle, Props>(function Island({ pages, open, re
       </svg>
 
       {pages.length > 1 && (
-        <div ref={controlRef} className={s.control} role="tablist" aria-label="Sections" aria-orientation="vertical">
+        <div
+          ref={controlRef}
+          className={s.control}
+          role="tablist"
+          aria-label="Sections"
+          aria-orientation="vertical"
+          data-teardown="stack"
+        >
           <span className={s.controlKnob} aria-hidden="true" />
           {pages.map((page, i) => (
             <button

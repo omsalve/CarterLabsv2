@@ -6,7 +6,7 @@ import s from "./projects.module.css";
 import { Spring } from "../island/spring";
 import { SceneContext } from "../island/scene";
 import { formatLat, formatLng } from "../hero/geo";
-import { PROJECTS, REACH_KM, fromStudio } from "./work";
+import { PROJECTS, REACH_KM, fromStudio, hasStudy } from "./work";
 
 /**
  * The Projects page: the work as a list, each row a pin on the map, and a case
@@ -23,6 +23,12 @@ import { PROJECTS, REACH_KM, fromStudio } from "./work";
  *   to the right (a finger, or two on a trackpad) takes it back under the finger.
  * - A flight follows `hop`. From one case to the next the camera flies pin to pin
  *   while the case turns over like a page of the stack.
+ *
+ * On the map, as the camera lands, the open case's pin springs open into its case
+ * study (Study.tsx), like the Dynamic Island opening into a Live Activity. Its
+ * spring follows the card's `focus` (and the stack), so a swipe back folds it into
+ * the disc under the finger, and on a flight one folds as the next one opens. Once
+ * it is fully open (`data-full` on the pin), its photographs page under the pointer.
  *
  * The hero flies the camera and hangs the pins (components/hero); this page says
  * what it wants through the scene (`scene.survey`) and drives the pins' look.
@@ -42,6 +48,8 @@ const CARD = {
 };
 const HOP = { response: 0.8, damping: 0.92 };
 const DROP = { response: 0.5, damping: 0.64 }; // a pin lands with a little give
+const LIVE = { response: 0.42, damping: 0.74 }; // a disc opens into its case study with the island's give
+const ROLL = { response: 0.6, damping: 0.86 }; // then the figures roll up
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const smooth = (a: number, b: number, x: number) => {
@@ -51,6 +59,12 @@ const smooth = (a: number, b: number, x: number) => {
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const rubber = (over: number, dim: number) => (1 - 1 / ((over * 0.55) / dim + 1)) * dim;
 const op = (v: number) => (v > 0.998 ? "" : Math.max(0, v).toFixed(3));
+/** A data flag, written only when it changes: set to the same value, it still restyles and notifies observers. */
+const flag = (el: HTMLElement, key: string, on: boolean) => {
+  if (on === (key in el.dataset)) return;
+  if (on) el.dataset[key] = "";
+  else delete el.dataset[key];
+};
 
 type Box = { x: number; y: number; w: number; h: number };
 /** A part's flight from the row to the case: where it starts, where it lands, and how much smaller it starts. */
@@ -126,6 +140,8 @@ export default function Projects() {
     const focus = new Spring(0, CARD.response, CARD.damping);
     const hop = new Spring(0, HOP.response, HOP.damping);
     const drops = PROJECTS.map(() => new Spring(0, reduced ? 0.3 : DROP.response, reduced ? 1 : DROP.damping));
+    const opens = PROJECTS.map(() => new Spring(0, reduced ? 0.34 : LIVE.response, reduced ? 1 : LIVE.damping));
+    const rolls = PROJECTS.map(() => new Spring(0, ROLL.response, ROLL.damping));
     let cur = -1; // the case the card belongs to (the row it lifted from)
     let want = 0; // 1 while it should be open
     let hopping = false;
@@ -354,11 +370,27 @@ export default function Projects() {
         m.style.setProperty("--r", reduced || drops[k].target < 1 ? "1" : smooth(0.3, 1, d).toFixed(3));
         m.style.setProperty("--sel", sel.toFixed(3));
         m.style.setProperty("--dim", Math.max(0, E - sel).toFixed(3));
-        if (d > 0.6) m.dataset.live = "";
-        else delete m.dataset.live;
+        flag(m, "live", d > 0.6);
+
+        // its case study opens as the camera lands and folds first on the way back, or as
+        // the page leaves; its spring gives it the island's life (Study.tsx)
+        const live = opens[k];
+        const here = reduced ? (q > 0.5 ? 1 : 0) : smooth(0.55, 0.95, q);
+        live.target = (reduced ? (sel >= 0.5 ? 1 : 0) : smooth(0.3, 0.92, sel)) * here * drops[k].target;
+        const lv = live.value;
+        if (lv > 0.7) rolls[k].target = 1;
+        else if (lv < 0.2) rolls[k].jump(0);
+        m.style.setProperty("--o", (reduced ? (lv >= 0.5 ? 1 : 0) : Math.max(0, lv)).toFixed(3));
+        m.style.setProperty("--c", (reduced ? smooth(0.25, 0.75, lv) : smooth(0.55, 1, lv)).toFixed(3));
+        m.style.setProperty("--roll", reduced ? "1" : rolls[k].value.toFixed(3));
+        flag(m, "open", lv > 0.002);
+        // fully open, and staying so: its photographs take the pointer (Gallery.tsx)
+        flag(m, "full", lv > 0.9 && live.target > 0.5);
       });
 
-      if (world) world.survey = { presence: q, focus: lifting ? e : 0, from: cur, to, t };
+      // each landmark grows out of the ground as its pin's hairline draws, and keeps the spring's give
+      const risen = drops.map((d) => Math.max(0, (d.value - 0.15) / 0.85));
+      if (world) world.survey = { presence: q, focus: lifting ? e : 0, from: cur, to, t, rise: risen };
     };
 
     // ---------------------------------------------------------------- hover: a row and its pin are one thing
@@ -564,6 +596,8 @@ export default function Projects() {
         closeAfterHop = false;
         cur = -1;
         want = 0;
+        opens.forEach((v) => v.jump(0));
+        rolls.forEach((v) => v.jump(0));
         setShown(-1);
       }
 
@@ -575,6 +609,9 @@ export default function Projects() {
       });
       focus.step(dt);
       hop.step(dt);
+      // (their targets are set as the pins are painted, from where the card is)
+      opens.forEach((v) => v.step(dt));
+      rolls.forEach((v) => v.step(dt));
 
       if (hopping && hop.resting) {
         hopping = false;
@@ -591,7 +628,13 @@ export default function Projects() {
       paint(o);
 
       const busy =
-        moved || drag.live || wheel.live || hopping || !focus.resting || !hop.resting || drops.some((d) => !d.resting);
+        moved ||
+        drag.live ||
+        wheel.live ||
+        hopping ||
+        !focus.resting ||
+        !hop.resting ||
+        [...drops, ...opens, ...rolls].some((v) => !v.resting);
       raf = busy ? requestAnimationFrame(tick) : (last = 0);
     };
     const wake = () => {
@@ -698,10 +741,31 @@ export default function Projects() {
                 {p.kind} · {p.street}
               </p>
             </header>
-            {p.summary && (
-              <p className={`${i.lede} ${s.summary}`} data-part="body">
-                {p.summary}
-              </p>
+            {/* The story is told on the map, above the pin (Study.tsx). The map is
+                hidden from assistive tech, so the case tells it here for them. */}
+            {(hasStudy(p) || p.description || p.images?.length) && (
+              <div className={s.told}>
+                {p.description && <p>{p.description}</p>}
+                {p.images?.length ? (
+                  <ul aria-label="Photographs">
+                    {p.images.map((ph) => (
+                      <li key={ph.src}>{ph.alt}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                {p.summary && <p>{p.summary}</p>}
+                {p.services?.length ? <p>What we made: {p.services.join(", ")}.</p> : null}
+                {p.growth?.length ? (
+                  <ul>
+                    {p.growth.map((g) => (
+                      <li key={g.label}>
+                        {g.label}: {g.figure}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {p.period && <p>{p.period}</p>}
+              </div>
             )}
             <dl className={s.facts} data-part="body">
               <div className={s.fact}>
@@ -720,12 +784,6 @@ export default function Projects() {
                   <dd className={s.measure}>
                     {formatLat(p.at[1])} · {formatLng(p.at[0])}
                   </dd>
-                </div>
-              )}
-              {p.services && (
-                <div className={s.fact}>
-                  <dt>What we made</dt>
-                  <dd>{p.services.join(", ")}</dd>
                 </div>
               )}
               {p.year && (

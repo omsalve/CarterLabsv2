@@ -23,7 +23,12 @@
 
 .stage {
   position: relative;
+  display: block;
+  width: 100%;
   aspect-ratio: 5 / 7;
+  margin: 0;
+  padding: 0;
+  border: 0;
   overflow: hidden;
   isolation: isolate;
   border-radius: 14px;
@@ -32,6 +37,28 @@
      player's light comes up. */
   background: linear-gradient(180deg, #141111 0%, #0b0909 52%, #050404 100%);
   box-shadow: 0 12px 26px -14px rgb(0 0 0 / 0.9);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transform-origin: 50% 62%;
+  transition: transform 450ms var(--ease-out);
+}
+
+.stage:disabled {
+  cursor: default;
+}
+
+/* pressed, it gives a little first, like a card on the Today tab */
+.stage:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 120ms;
+}
+
+.stage:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 3px;
 }
 
 .card:first-child .stage {
@@ -56,6 +83,17 @@
 }
 
 /* ------------------------------------------------------------------ layers, back to front */
+
+/* The art behind the caption. The profile's poster reuses it, scaled up
+   (components/team), so its measures are all relative to its own width. */
+.art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  container-type: inline-size;
+  pointer-events: none;
+}
 
 /* The light at the end of the tunnel, behind where the player stands. */
 .backlight {
@@ -88,7 +126,7 @@
   pointer-events: none;
 }
 
-.card:not([data-matte]) .number {
+.art:not([data-matte]) .number {
   z-index: 3;
   color: rgb(237 230 222 / 0.5);
   mix-blend-mode: overlay;
@@ -98,6 +136,7 @@
   position: absolute;
   inset: 0;
   z-index: 2;
+  display: block;
   transform-origin: 50% 100%;
 }
 

@@ -61,6 +61,24 @@ export function distanceKm([lng1, lat1]: LngLat, [lng2, lat2]: LngLat) {
   return 12742 * Math.asin(Math.sqrt(a));
 }
 
+/**
+ * A rectangle on the ground centred on `at`: `w` metres east to west, `d` north to
+ * south, turned `turn` degrees clockwise. Closed, counter-clockwise.
+ */
+export function footprint([lng, lat]: LngLat, w: number, d: number, turn = 0): LngLat[] {
+  const perDeg = 111320; // metres in a degree of latitude
+  const k = Math.cos((lat * Math.PI) / 180);
+  const r = (turn * Math.PI) / 180;
+  return [[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]].map(([x, y]): LngLat => {
+    const east = (x * w) / 2;
+    const north = (y * d) / 2;
+    return [
+      lng + (east * Math.cos(r) + north * Math.sin(r)) / (perDeg * k),
+      lat + (north * Math.cos(r) - east * Math.sin(r)) / perDeg,
+    ];
+  });
+}
+
 /** How far along a line (0..1 of its length) the vertex nearest to `at` sits. */
 function along(line: LngLat[], at: LngLat) {
   const k = Math.cos((at[1] * Math.PI) / 180);

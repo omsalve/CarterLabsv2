@@ -1,0 +1,530 @@
+/* ------------------------------------------------------------------ a case study, on the map */
+
+/* A project's case study, hung on its pin (Study.tsx). The pin's disc springs open
+   into it like the Dynamic Island opening into a Live Activity: the shape grows up
+   and out of the disc, its lower edge held on the stem, its corners concentric with
+   the disc's (12px, 10px in, so 22px). It is not glass (there is one glass); it is
+   the island's black, lit only at its rim.
+
+   Everything is drawn from the pin's variables (components/hero, .mark):
+   --o     how open: 0 the disc … 1 the card (the Projects page's spring, give and all)
+   --oc    the same, held to 0..1
+   --c     the content, which comes in as the shape nears full
+   --roll  the figures, rolling up digit by digit once it has opened
+   --lh    the pin's name, which rides up to be the header (measured by the hero)
+   --lw    …and its width, which the card never falls short of
+   --reach how far the stem climbs so the card clears the project's landmark */
+.study {
+  --in-t: calc((100% - 24px) * (1 - var(--oc)));
+  --in-r: calc((100% - 34px) * (1 - var(--oc)));
+  --in-l: calc(10px * (1 - var(--oc)));
+  --round: calc(12px + 10px * var(--oc));
+  position: absolute;
+  left: -22px;
+  bottom: calc(var(--stem) + 4px);
+  width: max(clamp(340px, 27vw, 396px), calc(var(--lw) + 62px));
+  opacity: min(1, var(--o) * 12);
+  /* it climbs the stem as it opens; past open on its spring it swells a touch, like the island */
+  translate: 0 calc(var(--reach) * var(--oc) * -1);
+  scale: calc(1 + max(0, var(--o) - 1) * 0.6);
+  transform-origin: 22px 100%;
+  pointer-events: none;
+}
+
+/* read from the left of the pin when only the left has room */
+[data-side="left"] > .study {
+  --in-r: calc(10px * (1 - var(--oc)));
+  --in-l: calc((100% - 34px) * (1 - var(--oc)));
+  left: auto;
+  right: -22px;
+  transform-origin: calc(100% - 22px) 100%;
+}
+
+/* The shape: the disc's box at 0, the card's at 1, its lower edge never moving. */
+.fill {
+  position: absolute;
+  top: var(--in-t);
+  right: var(--in-r);
+  bottom: 0;
+  left: var(--in-l);
+  border-radius: var(--round);
+  background: rgb(4 3 3 / 0.92);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    inset 0 0 0 1px rgb(237 230 222 / 0.1),
+    0 22px 44px -20px rgb(0 0 0 / 0.95),
+    0 2px 8px rgb(0 0 0 / 0.5);
+}
+
+/* The content, laid out at full size and shown through the shape. The top keeps
+   room for the header (the pin's own name, flown up: 12px in), and the photographs
+   sit 10px under it and 10px in from the sides, the same inset as the disc, so their
+   corners are concentric too (12px). It rides the shape's top edge up, as the disc
+   and the name do, and like a Live Activity's it comes in out of a blur, its lines
+   closing up. */
+.body {
+  position: relative;
+  padding: calc(var(--lh) + 22px) 16px 16px;
+  clip-path: inset(var(--in-t) var(--in-r) 0 var(--in-l) round var(--round));
+  opacity: var(--c);
+  filter: blur(calc((1 - var(--c)) * 5px));
+}
+
+.body > * {
+  translate: 0 calc((var(--ch) - 24px) * (1 - var(--oc)) + (1 - var(--c)) * 8px);
+}
+
+/* ------------------------------------------------------------------ the photographs */
+
+/* A window onto a strip of frames, paged like the Photos app (Gallery.tsx). Each
+   frame is 4:3, never taller than a third of the screen; the next one waits past
+   the window's edge, 12px along, and passes through it under the finger. */
+.gallery {
+  --shot-h: min(75cqw, 36svh);
+  position: relative;
+  margin: 0 -6px;
+  container-type: inline-size;
+  overflow: clip;
+  border-radius: 12px;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* it takes the pointer only once the card is fully open (the Projects page's data-full) */
+[data-full] > .study .gallery {
+  pointer-events: auto;
+}
+
+[data-full] > .study .gallery:not([data-count="1"]) {
+  cursor: grab;
+}
+
+.gallery[data-dragging] {
+  cursor: grabbing;
+}
+
+.track {
+  display: flex;
+  gap: 12px;
+}
+
+/* The pin's variables stop here. The hero and the Projects page rewrite them every
+   frame the camera or the card moves, on every pin, and nothing inside the strip
+   reads them; left to inherit, each write would restyle all three frames of every
+   pin's strip. Reset, the strip's parts come out of each restyle unchanged, so the
+   browser stops at them. (The gallery itself still reads them, through .body > *.) */
+.track,
+.step,
+.dots {
+  --o: initial;
+  --oc: initial;
+  --c: initial;
+  --roll: initial;
+  --reach: initial;
+  --d: initial;
+  --l: initial;
+  --k: initial;
+  --r: initial;
+  --sel: initial;
+  --dim: initial;
+  --hot: 0;
+  --in-t: initial;
+  --in-r: initial;
+  --in-l: initial;
+  --round: initial;
+  --ch: initial;
+  --lh: initial;
+  --lw: initial;
+}
+
+.slide {
+  --away: 0;
+  flex: 0 0 100%;
+  min-width: 0;
+  margin: 0;
+  /* the frame sliding away dims a little into the dark between them */
+  opacity: calc(1 - var(--away) * 0.45);
+}
+
+.shot {
+  position: relative;
+  display: block;
+  height: var(--shot-h);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0b0909;
+}
+
+/* the frame's rim, over the photograph, like the card's own */
+.shot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 1px rgb(237 230 222 / 0.09),
+    inset 0 1px 0 rgb(255 255 255 / 0.04);
+  pointer-events: none;
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -webkit-user-drag: none;
+}
+
+.caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 4px 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  color: var(--bone-soft);
+  white-space: nowrap;
+}
+
+.caption > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.soon {
+  flex: none;
+  color: var(--ash);
+}
+
+/* The stand-in: the landmark as a survey sheet draws it (drawing.ts), in bone, for
+   the card keeps no red but the disc. A faint light pools where it stands. */
+.standIn {
+  background:
+    radial-gradient(90% 70% at 50% 60%, rgb(237 230 222 / 0.05), transparent 70%),
+    #0a0808;
+}
+
+.sheet {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.grid {
+  fill: none;
+  stroke: rgb(237 230 222 / 0.11);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.hidden {
+  fill: none;
+  stroke: rgb(237 230 222 / 0.26);
+  stroke-width: 1;
+  stroke-dasharray: 2.5 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.face {
+  fill: rgb(237 230 222 / 0.035);
+}
+
+.face[data-tone="lit"] {
+  fill: rgb(237 230 222 / 0.075);
+}
+
+.face[data-tone="top"] {
+  fill: rgb(237 230 222 / 0.13);
+}
+
+/* solid, not alpha, so the edges two faces share don't draw twice as bright */
+.edge {
+  fill: none;
+  stroke: #bfb8b0;
+  stroke-width: 1;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.ring {
+  fill: rgb(237 230 222 / 0.12);
+}
+
+.pin {
+  fill: var(--bone);
+}
+
+/* Page dots, on a smoke capsule over the foot of the frame. Each is lit by how near
+   the strip is to its frame, so they scrub with a swipe. */
+.dots {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--shot-h) - 10px);
+  translate: -50% -100%;
+  display: flex;
+  gap: 7px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: rgb(4 3 3 / 0.58);
+  box-shadow: inset 0 0 0 1px rgb(237 230 222 / 0.08);
+}
+
+.dot {
+  --lit: 0;
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(237 230 222 / calc(0.3 + var(--lit) * 0.7));
+  cursor: pointer;
+}
+
+/* a finger-sized target around a small dot */
+.dot::after {
+  content: "";
+  position: absolute;
+  inset: -8px -4px;
+}
+
+/* Chevrons for a mouse, on hover, as Photos on the Mac shows them. */
+.step {
+  position: absolute;
+  top: calc(var(--shot-h) / 2);
+  display: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgb(4 3 3 / 0.62);
+  box-shadow:
+    inset 0 0 0 1px rgb(237 230 222 / 0.12),
+    0 6px 14px -6px rgb(0 0 0 / 0.9);
+  color: var(--bone);
+  translate: 0 -50%;
+  opacity: 0;
+  cursor: pointer;
+  transition:
+    opacity 250ms var(--ease-out),
+    scale 450ms var(--ease-out),
+    background-color 200ms var(--ease-out);
+}
+
+.step svg {
+  width: 14px;
+  height: 14px;
+}
+
+.step[data-step="-1"] {
+  left: 10px;
+}
+
+.step[data-step="1"] {
+  right: 10px;
+}
+
+.step:hover {
+  background: rgb(4 3 3 / 0.8);
+}
+
+.step:active {
+  scale: 0.9;
+  transition-duration: 120ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .step {
+    display: grid;
+  }
+
+  .gallery:hover .step {
+    opacity: 1;
+  }
+
+  .gallery[data-at="start"] .step[data-step="-1"],
+  .gallery[data-at="end"] .step[data-step="1"],
+  .gallery[data-dragging] .step {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* ------------------------------------------------------------------ the words */
+
+/* The brand, in a line or two. */
+.description {
+  margin: 14px 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--bone);
+  text-wrap: pretty;
+}
+
+/* What we did for the brand. */
+.brief {
+  margin: 10px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--bone-soft);
+  text-wrap: pretty;
+}
+
+.gallery + .brief {
+  margin-top: 14px;
+  color: var(--bone);
+}
+
+.services {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ash);
+}
+
+/* What it did for them: two or three figures, under a hairline. */
+.growth {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid var(--hairline);
+}
+
+.gallery + .growth {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.result {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.figure {
+  --line: 1.15em;
+  display: inline-flex;
+  height: var(--line);
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: var(--line);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: pre;
+  color: var(--bone);
+}
+
+/* A digit's window, and the reel of 0–9 behind it. The reel rolls up from 0 to the
+   digit (the next digit a beat later), soft only while it moves. */
+.digit {
+  display: inline-block;
+  height: var(--line);
+  overflow: hidden;
+}
+
+.reel {
+  --r: clamp(0, (var(--roll) - var(--a)) / 0.5, 1);
+  display: block;
+  translate: 0 calc(var(--n) * -1 * var(--line) * (1 - (1 - var(--r)) * (1 - var(--r)) * (1 - var(--r))));
+  filter: blur(calc(sin(var(--r) * 180deg) * 1.2px));
+}
+
+.label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--bone-soft);
+}
+
+.period {
+  margin: 12px 0 0;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  color: var(--ash);
+}
+
+/* Where it is, at the foot, under a hairline. */
+.place {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--bone-soft);
+}
+
+.gallery + .place {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.measure {
+  font-family: var(--font-measure);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ash);
+}
+
+/* ------------------------------------------------------------------ compact */
+
+/* On a phone the card shares the open map with a taller island, so its frames go
+   wide (16:9) and the place, which the case in the island already gives, drops out. */
+@media (max-width: 759px) {
+  .study {
+    width: min(max(320px, calc(var(--lw) + 62px)), calc(100vw - 24px));
+  }
+
+  .gallery {
+    --shot-h: min(56.25cqw, 24svh);
+  }
+
+  .description {
+    margin-top: 12px;
+    font-size: 0.875rem;
+  }
+
+  .place {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ calm */
+
+/* Nothing grows or rolls: the card cross-fades in, already whole (the Projects page
+   cuts --o at halfway), with its figures already set. The photographs still follow
+   a finger, but settle without give. */
+@media (prefers-reduced-motion: reduce) {
+  .study {
+    opacity: var(--c);
+    scale: none;
+  }
+
+  .body {
+    filter: none;
+  }
+
+  .body > * {
+    translate: none;
+  }
+
+  .reel {
+    translate: 0 calc(var(--n) * -1 * var(--line));
+    filter: none;
+  }
+
+  .step {
+    transition: none;
+  }
+}

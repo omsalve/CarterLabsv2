@@ -1,5 +1,6 @@
 import type { StyleSpecification, ExpressionSpecification } from "maplibre-gl";
 import { graticule, carterRoad, STUDIO_ALONG } from "./geo";
+import { sites } from "../projects/work";
 
 /**
  * A night-survey rendering of OpenStreetMap: near-black ground, arterial roads as
@@ -23,6 +24,8 @@ const C = {
   roadMinor: "#1b1615",
   rail: "rgba(236, 228, 220, 0.11)",
   building: "#1c1616",
+  site: "#e0263a",
+  siteDark: "#3e070b",
   label: "#756a64",
   labelDim: "#504744",
 };
@@ -35,9 +38,18 @@ const ramp = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 
+/**
+ * How far a project's landmark has risen, 0..1 (a little past 1 while its pin's
+ * spring overshoots). Hero writes it to each feature's state as the pins drop.
+ */
+const rise: ExpressionSpecification = ["max", 0, ["to-number", ["feature-state", "rise"]]];
+
 /** Carter Road in Lit Blood; the head of the line runs hot while it is still drawing. */
 const ROAD_RED = [196, 32, 42];
 const ROAD_HOT = [255, 178, 164];
+
+/** A building OSM gives no height is raised this far (metres). */
+export const UNTAGGED_HEIGHT = 6;
 
 /** The layers that carry Carter Road, with the share of the road's light each one gets. */
 export const ROAD_LAYERS: [id: string, alpha: number][] = [
@@ -48,22 +60,30 @@ export const ROAD_LAYERS: [id: string, alpha: number][] = [
 /**
  * Carter Road's colour along its length. `reveal` 0..1 lights it outward from the
  * studio toward both ends; the last fifth at either end always dissolves into the
- * street, so the road never stops on a hard edge.
+ * street, so the road never stops on a hard edge. `surge` 0..1 runs a pulse of hot
+ * light from the studio out to both ends over the lit road (the place answering the
+ * About page's thread); at 0 there is none.
  */
-export function roadGradient(reveal: number, alpha = 1): ExpressionSpecification {
+export function roadGradient(reveal: number, alpha = 1, surge = 0): ExpressionSpecification {
   const r = Math.min(1, Math.max(0, reveal));
   const from = STUDIO_ALONG * (1 - r);
   const to = STUDIO_ALONG + (1 - STUDIO_ALONG) * r;
   const soft = 0.045;
   const heat = 1 - ramp(0.78, 1, r);
+  // the surge's two fronts: a flash as they leave the studio, spent by the time they reach the ends
+  const g = Math.min(1, Math.max(0, surge));
+  const charge = g > 0 && g < 1 ? ramp(0, 0.05, g) * (1 - ramp(0.55, 1, g)) : 0;
+  const back = STUDIO_ALONG * (1 - g);
+  const on = STUDIO_ALONG + (1 - STUDIO_ALONG) * g;
   const stops: (number | string)[] = [];
   for (let i = 0; i <= 48; i++) {
     const t = i / 48;
     const ends = ramp(0, 0.22, t) * ramp(1, 0.78, t);
     const lit = ramp(from - soft, from, t) * ramp(to + soft, to, t) * Math.min(1, r * 10);
-    const head = heat * Math.min(1, Math.exp(-(((t - from) / 0.035) ** 2)) + Math.exp(-(((t - to) / 0.035) ** 2)));
+    const pulse = charge * Math.min(1, Math.exp(-(((t - back) / 0.05) ** 2)) + Math.exp(-(((t - on) / 0.05) ** 2)));
+    const head = Math.max(heat * Math.min(1, Math.exp(-(((t - from) / 0.035) ** 2)) + Math.exp(-(((t - to) / 0.035) ** 2))), pulse);
     const rgb = ROAD_RED.map((c, j) => Math.round(c + (ROAD_HOT[j] - c) * head * 0.85));
-    stops.push(t, `rgba(${rgb.join(",")},${(ends * lit * alpha).toFixed(3)})`);
+    stops.push(t, `rgba(${rgb.join(",")},${Math.min(1, ends * lit * alpha * (1 + 0.3 * pulse)).toFixed(3)})`);
   }
   return ["interpolate", ["linear"], ["line-progress"], ...stops] as ExpressionSpecification;
 }
@@ -86,6 +106,7 @@ export function buildStyle(demTiles: string, contourTiles: string | null): Style
         : {}),
       grid: { type: "geojson", data: graticule() },
       carter: { type: "geojson", data: carterRoad(), lineMetrics: true },
+      work: { type: "geojson", data: sites() },
     },
     sky: {
       "sky-color": "#000000",
@@ -286,6 +307,19 @@ export function buildStyle(demTiles: string, contourTiles: string | null): Style
           "line-blur": 0.6,
         },
       },
+      // The work's landmarks throw red light on the ground around them.
+      {
+        id: "work-glow",
+        type: "line",
+        source: "work",
+        layout: { "line-join": "round" },
+        paint: {
+          "line-color": C.site,
+          "line-width": z([[12, 6], [15, 22], [17, 64]]),
+          "line-blur": z([[12, 6], [15, 22], [17, 64]]),
+          "line-opacity": ["*", 0.7, ["min", 1, rise]],
+        },
+      },
       {
         id: "buildings",
         type: "fill-extrusion",
@@ -297,7 +331,7 @@ export function buildStyle(demTiles: string, contourTiles: string | null): Style
           "fill-extrusion-height": [
             "interpolate", ["linear"], ["zoom"],
             13.4, 0,
-            14.6, ["coalesce", ["get", "render_height"], 6],
+            14.6, ["coalesce", ["get", "render_height"], UNTAGGED_HEIGHT],
           ],
           "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
           "fill-extrusion-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0, 13.8, 0.92],
@@ -372,6 +406,20 @@ export function buildStyle(demTiles: string, contourTiles: string | null): Style
           "text-halo-color": C.ground,
           "text-halo-width": 1,
           "text-opacity": ["interpolate", ["linear"], ["zoom"], 13.6, 0, 14.2, 1],
+        },
+      },
+      // The work, raised in red on its pins: the tower, the long block and the small
+      // box grow out of the ground with them and ignite as they go. Hidden until the
+      // first one starts to rise (see Hero). Last, so no label is drawn across them.
+      {
+        id: "work",
+        type: "fill-extrusion",
+        source: "work",
+        layout: { visibility: "none" },
+        paint: {
+          "fill-extrusion-color": ["interpolate", ["linear"], rise, 0, C.siteDark, 0.6, C.site],
+          "fill-extrusion-height": ["*", ["get", "h"], rise],
+          "fill-extrusion-vertical-gradient": true,
         },
       },
     ],

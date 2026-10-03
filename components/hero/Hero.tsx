@@ -41,6 +41,7 @@ import {
 } from "./geo";
 import { buildStyle, TERRARIUM, ROAD_LAYERS, roadGradient } from "./map-style";
 import { createSurfLayer, type SurfLayer } from "./surf-layer";
+import { padAwareTileZoom } from "./lod";
 import Island from "../island/Island";
 import { ISLAND_PAGES } from "../island/pages";
 import { Spring } from "../island/spring";
@@ -48,7 +49,10 @@ import { SceneContext } from "../island/scene";
 import { createGlassLayer, type GlassLayer } from "../island/glass-layer";
 import type { IslandHandle, IslandScene } from "../island/types";
 import { PROJECTS } from "../projects/work";
+import Study from "../projects/Study";
 import { blend, fit, flight, shotKey, type Shot } from "../projects/camera";
+import { installLayers } from "../teardown/capture";
+import Teardown from "../teardown/Teardown";
 
 type Phase = "void" | "line" | "line-out" | "descend" | "arrived";
 const ORDER: Phase[] = ["void", "line", "line-out", "descend", "arrived"];
@@ -100,10 +104,58 @@ const SURVEY = {
   margin: { top: 84, bottom: 36, left: 40, right: 72 },
   compactMargin: { top: 64, bottom: 24, left: 28, right: 28 },
   maxZoom: 15.4,
-  lift: 90, // up close, the project sits this much lower in the open map, under its name
+  // Up close, the pin and its case study hang in the open map as one box, kept this far in…
+  closeEdge: { wide: 24, compact: 12 },
+  // …the card's near edge this far left of the pin (the disc's radius and its 10px inset; study.module.css)
+  hang: 22,
+};
+
+/** Metres of ground under one CSS pixel at `lat`, at `zoom`. */
+const metresPerPixel = (zoom: number, lat: number) => (40075016.686 * Math.cos((lat * Math.PI) / 180)) / (512 * 2 ** zoom);
+
+/**
+ * How much further an open case study climbs its stem so it hangs clear of the
+ * project's landmark (its walls foreshortened by the pitch, then its roof receding
+ * to the far edge; 6px to spare), when its lower edge would otherwise sit `base` px
+ * above the dot.
+ */
+const reachOver = (site: { w: number; d: number; h: number }, zoom: number, pitch: number, lat: number, base: number) => {
+  const a = (pitch * Math.PI) / 180;
+  const roof = site.h * Math.sin(a) + (Math.max(site.w, site.d) / 2) * Math.cos(a);
+  return Math.max(0, roof / metresPerPixel(zoom, lat) + 6 - base);
 };
 
 const NICE_DISTANCES = [50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000];
+
+/**
+ * "Show me" on the Systems Architect's profile: a survey ping. Rings leave the
+ * studio across the ground (squashed by the camera's pitch, so they lie on it) and
+ * the relief and the coast brighten as they pass.
+ */
+const PING = { ms: 2600, peak: 0.3 };
+
+/**
+ * The place answering the About page (The Signature). As its thread touches down on
+ * the studio, a pulse of hot light runs out along Carter Road both ways, a wave of
+ * light runs along the surf, and the pin reads out where it is, digits rolling up.
+ */
+const ANSWER = {
+  at: 0.6, // how far the thread has touched down when the place answers
+  surge: 1300, // ms for the pulse to run out to the road's ends
+  wave: 2800, // ms the wave of light runs along the shore…
+  reach: 3000, // …and how far it gets, in metres from the studio
+};
+
+const REEL = "0\n1\n2\n3\n4\n5\n6\n7\n8\n9";
+
+/** One character of a read-out: a digit rolls (`order` across the whole read-out), anything else stays put. */
+type Glyph = { ch: string; digit?: number; order?: number };
+const reels = (lines: string[]): Glyph[][] => {
+  let order = 0;
+  return lines.map((line) => Array.from(line).map((ch) => (/\d/.test(ch) ? { ch, digit: Number(ch), order: order++ } : { ch })));
+};
+/** The studio pin's read-out (see ANSWER). */
+const STUDIO_FIX = reels([formatLat(STUDIO[1]), formatLng(STUDIO[0])]);
 
 const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
 const subscribeReduced = (onChange: () => void) => {
@@ -134,14 +186,20 @@ export default function Hero() {
     glass: null,
     pointer: { x: 0, y: 0 },
     pin: null,
+    touch: 0,
     frame: null,
     marks: [],
     onMark: null,
     survey: null,
+    demos: {},
+    layers: null,
+    takeApart: null,
+    hold: false,
   });
   /** page content inside the island reaches the scene through this (see island/scene.ts) */
   const getScene = useCallback(() => sceneRef.current, []);
   const pinRef = useRef<HTMLDivElement>(null);
+  const pingRef = useRef<HTMLDivElement>(null);
   const marksRef = useRef<(HTMLDivElement | null)[]>([]);
   const reticleRef = useRef<HTMLDivElement>(null);
   const reticleAltRef = useRef<HTMLSpanElement>(null);
@@ -252,10 +310,32 @@ export default function Hero() {
 
     // ------------------------------------------------------------------ HUD + callouts
     const labelW: number[] = []; // the project pins' names, measured once
+    /**
+     * Each pin's case study (components/projects/Study.tsx) as laid out: how far its
+     * parts travel as it opens, and what the camera frames up close. `base` is where
+     * its lower edge sits above the dot before it climbs (the disc's place).
+     */
+    const hangs: { w: number; h: number; base: number }[] = [];
+    let hangKey = "";
+    const measureMarks = () => {
+      marksRef.current.forEach((mark, i) => {
+        const text = mark?.querySelector<HTMLElement>(`.${s.markText}`);
+        const disc = mark?.querySelector<HTMLElement>(`.${s.markDisc}`);
+        const study = mark?.querySelector<HTMLElement>("[data-study]");
+        if (!mark || !text || !disc || !study) return;
+        mark.style.setProperty("--lh", `${text.offsetHeight}px`);
+        mark.style.setProperty("--lw", `${text.offsetWidth}px`);
+        hangs[i] = { w: study.offsetWidth, h: study.offsetHeight, base: -disc.offsetTop - disc.offsetHeight };
+        mark.style.setProperty("--ch", `${hangs[i].h}px`);
+      });
+      hangKey = hangs.map((b) => `${b.w}x${b.h}+${b.base}`).join(",");
+    };
     const sync = () => {
       if (!map) return;
       const w = host.clientWidth;
       const h = host.clientHeight;
+      const zoom = map.getZoom();
+      const pitch = map.getPitch();
       const place = (el: HTMLElement | null, at: LngLat) => {
         if (!el) return;
         const p = map!.project(at);
@@ -266,6 +346,8 @@ export default function Hero() {
       };
       for (const t of TERRITORIES) place(labelRefs.current[t.id], t.at);
       place(pinRef.current, STUDIO);
+      place(pingRef.current, STUDIO);
+      pingRef.current?.style.setProperty("--flat", Math.cos((pitch * Math.PI) / 180).toFixed(3));
       place(reticle, STUDIO);
       PROJECTS.forEach((pr, i) => {
         const mark = marksRef.current[i];
@@ -276,10 +358,12 @@ export default function Hero() {
         const right = w - p.x - 32;
         const left = p.x - 32;
         mark.dataset.side = right >= labelW[i] || right >= left ? "right" : "left";
+        // its case study, once open, hangs clear of the landmark standing on it, where there's room
+        const reach = Math.min(reachOver(pr.site, zoom, pitch, pr.at[1], hangs[i]?.base ?? 32), shots?.reach[i] ?? Infinity);
+        mark.style.setProperty("--reach", `${reach.toFixed(1)}px`);
       });
 
       const c = map.getCenter();
-      const zoom = map.getZoom();
       if (coordRef.current) coordRef.current.textContent = `${formatLat(c.lat)}   ${formatLng(c.lng)}`;
       const alt = cameraAltitude(zoom, c.lat, map.getPitch(), h);
       const altText = alt >= 1000 ? `ALT ${(alt / 1000).toFixed(1)} KM` : `ALT ${Math.round(alt)} M`;
@@ -346,6 +430,8 @@ export default function Hero() {
         canvasContextAttributes: { antialias: true },
       });
       map = m;
+      // the Projects close-ups pad the camera hard; keep distant tiles at a sane zoom (lod.ts)
+      padAwareTileZoom(m);
       fov0 = fov = m.getVerticalFieldOfView();
       surf = createSurfLayer();
       surf.setFrozen(reducedMotion);
@@ -356,6 +442,9 @@ export default function Hero() {
       m.addLayer(surf, "runways");
       m.addLayer(glass); // last: atmosphere, then glass over the finished map
       scene.glass = glass;
+      // the teardown lifts each layer of the landed frame out on its own (components/teardown)
+      const layers = installLayers(m, glass);
+      if (layers) scene.layers = { ...layers, capture: () => (arrived ? layers.capture() : null) };
       if (arrived) glass.setHaze(1);
       m.on("move", sync);
       m.on("resize", sync);
@@ -631,10 +720,13 @@ export default function Hero() {
     // ------------------------------------------------------------------ the survey (Projects)
     /** Where the camera rests once landed; the Projects page's moves start and end here. */
     let rest: Shot | null = null;
-    let shots: { key: string; overview: Shot; close: Shot[] } | null = null;
+    /** The survey's shots for the island as it is now, and how far each case study may climb its stem up close. */
+    let shots: { key: string; overview: Shot; close: Shot[]; reach: number[] } | null = null;
     let lastShot = "";
     let quiet = 0;
     let surveyed = "";
+    const risen: number[] = [];
+    let raised = false;
 
     /** The part of the view the island leaves open, as camera padding. */
     const openMap = () => {
@@ -651,22 +743,48 @@ export default function Hero() {
       const w = host.clientWidth;
       const h = host.clientHeight;
       const pad = openMap();
-      const key = `${w}x${h}:${Math.round(pad.top)},${Math.round(pad.bottom)},${Math.round(pad.left)}`;
+      const key = `${w}x${h}:${Math.round(pad.top)},${Math.round(pad.bottom)},${Math.round(pad.left)}:${hangKey}`;
       if (shots?.key === key) return shots;
       const compact = isCompact();
       const all = [STUDIO, ...PROJECTS.map((p) => p.at)];
       const margin = compact ? SURVEY.compactMargin : SURVEY.margin;
       const overview = fit(all, { w, h }, pad, margin, SURVEY.pitch, from.bearing, SURVEY.maxZoom);
-      // Up close the project sits a little low, under its name; on a phone, a little
-      // left too, so the name has the width to its right.
-      const lift = compact ? SURVEY.lift / 2 : SURVEY.lift;
-      const aside = compact ? w * 0.3 : pad.right;
-      const close = PROJECTS.map((p): Shot => ({
-        center: p.at,
-        ...p.shot,
-        padding: { ...pad, top: pad.top + lift, right: aside },
-      }));
-      return (shots = { key, overview, close });
+      // Up close, the pin and its case study hang in the middle of the open map as one
+      // box: the card above the dot (clear of the landmark), reading to its right.
+      // Where there isn't the height to clear a tall landmark, the card stands in front
+      // of its top instead, so the pin stays out from under the glass; where even that
+      // can't fit, the box's top and near edges stay in.
+      const edge = compact ? SURVEY.closeEdge.compact : SURVEY.closeEdge.wide;
+      const L = pad.left + edge;
+      const R = w - pad.right - edge;
+      const T = pad.top + edge;
+      const B = h - pad.bottom - edge;
+      const cx = (pad.left + w - pad.right) / 2;
+      const cy = (pad.top + h - pad.bottom) / 2;
+      const reach = PROJECTS.map((p, i) => {
+        const card = hangs[i] ?? { w: 0, h: 0, base: 32 };
+        const room = Math.max(0, B - T - card.base - card.h);
+        return Math.min(reachOver(p.site, p.shot.zoom, p.shot.pitch, p.at[1], card.base), room);
+      });
+      const close = PROJECTS.map((p, i): Shot => {
+        const card = hangs[i] ?? { w: 0, h: 0, base: 32 };
+        const up = card.base + reach[i] + card.h;
+        const x = Math.max(L, Math.min((L + R - card.w) / 2, R - card.w)) + SURVEY.hang;
+        const y = Math.max(T, Math.min((T + B - up) / 2, B - up)) + up;
+        // The padding that puts the project there: the open map's, plus more on one side.
+        // Never less, so the card's spring, overshooting this shot, can't take a side below 0.
+        return {
+          center: p.at,
+          ...p.shot,
+          padding: {
+            top: pad.top + Math.max(0, 2 * (y - cy)),
+            bottom: pad.bottom + Math.max(0, 2 * (cy - y)),
+            left: pad.left + Math.max(0, 2 * (x - cx)),
+            right: pad.right + Math.max(0, 2 * (cx - x)),
+          },
+        };
+      });
+      return (shots = { key, overview, close, reach });
     };
 
     const cut = (v: number) => (v >= 0.5 ? 1 : 0);
@@ -678,7 +796,8 @@ export default function Hero() {
      * cut, at halfway. The pointer's parallax rides on top, as it always has.
      */
     const direct = (m: MapLibreMap) => {
-      if (!rest) return;
+      // while the site is taken apart the camera holds the frame it was taken from
+      if (!rest || scene.hold) return;
       const sv = scene.survey;
       const presence = sv ? clamp(sv.presence, 0, 1) : 0;
       let cam = rest;
@@ -715,6 +834,106 @@ export default function Hero() {
       }
       const surveying = presence.toFixed(3);
       if (surveying !== surveyed) root.style.setProperty("--survey", (surveyed = surveying));
+
+      // The work's landmarks rise on their pins (see map-style: "work").
+      if (sv && m.getSource("work")) {
+        let up = false;
+        sv.rise.forEach((r, k) => {
+          const v = Math.round(r * 1000) / 1000;
+          up ||= v > 0;
+          if (v === risen[k]) return;
+          risen[k] = v;
+          m.setFeatureState({ source: "work", id: k }, { rise: v });
+        });
+        if (up !== raised) {
+          raised = up;
+          m.setLayoutProperty("work", "visibility", up ? "visible" : "none");
+        }
+      }
+    };
+
+    // ------------------------------------------------------------------ "Show me": the survey ping
+    let pingRaf = 0;
+    /** The relief and the coast, brightened by `k` (0..1) as the ping passes. */
+    const lightRelief = (k: number) => {
+      if (!map) return;
+      if (map.getLayer("contours")) {
+        const up = (v: number) => Math.min(1, v * (1 + 1.6 * k));
+        map.setPaintProperty("contours", "line-opacity", ["interpolate", ["linear"], ["zoom"], 9, up(0.55), 13, up(0.4), 16, up(0.3)]);
+      }
+      map.setPaintProperty("coast", "line-color", `rgba(236, 228, 220, ${(0.16 + 0.34 * k).toFixed(3)})`);
+    };
+    scene.demos.map = () => {
+      if (!map || !arrived) return;
+      const ping = pingRef.current;
+      if (ping && !reducedMotion) {
+        delete ping.dataset.on;
+        void ping.offsetWidth; // restart the rings
+        ping.dataset.on = "";
+      }
+      const from = performance.now();
+      cancelAnimationFrame(pingRaf);
+      const step = (now: number) => {
+        const t = Math.min(1, (now - from) / PING.ms);
+        lightRelief(smooth(0, PING.peak, t) * (1 - smooth(PING.peak + 0.1, 1, t)));
+        if (t < 1) pingRaf = requestAnimationFrame(step);
+      };
+      pingRaf = requestAnimationFrame(step);
+    };
+
+    // ------------------------------------------------------------------ the place answers (About)
+    // As the About page's thread touches down on the studio (scene.touch, written by
+    // the island), a pulse of hot light runs out along Carter Road both ways and a
+    // wave of light runs along the surf; both run their course once sent. The pin
+    // reads out where it is, its digits rolling up, and folds as the thread lets go.
+    let answered = false;
+    let sentAt = 0; // when the pulse and the wave left the studio (0: none running)
+    let surging = false;
+    const shown = new Spring(0, 0.34, 1);
+    const roll = new Spring(0, 0.6, 0.86);
+    let readout = "";
+    const surgeRoad = (k: number) => {
+      if (!map) return;
+      for (const [id, alpha] of ROAD_LAYERS) {
+        map.setPaintProperty(id, "line-gradient", roadGradient(roadLevel, alpha, k), { validate: false });
+      }
+    };
+    const answer = (now: number, dt: number) => {
+      if (!answered && scene.touch >= ANSWER.at) {
+        answered = true;
+        shown.target = 1;
+        roll.target = 1;
+        if (reducedMotion) roll.jump(1);
+        else {
+          sentAt = now;
+          surging = true;
+        }
+      } else if (answered && scene.touch <= 0.02) {
+        answered = false;
+        shown.target = 0;
+      }
+
+      if (sentAt) {
+        const t = now - sentAt;
+        if (surging) {
+          surging = t < ANSWER.surge;
+          surgeRoad(surging ? easeOutCubic(t / ANSWER.surge) : 0);
+        }
+        const w = Math.min(1, t / ANSWER.wave);
+        surf?.setWave(STUDIO, ANSWER.reach * easeOutCubic(w), smooth(0, 0.05, w) * (1 - smooth(0.35, 1, w)));
+        if (w >= 1 && !surging) sentAt = 0;
+      }
+
+      shown.step(dt);
+      roll.step(dt);
+      // folded away: the digits go back to 0, ready to roll up next time
+      if (shown.target === 0 && shown.value < 0.01) roll.jump(0);
+      const next = `${shown.value.toFixed(3)} ${roll.value.toFixed(3)}`;
+      if (next !== readout) {
+        readout = next;
+        pinRef.current?.style.setProperty("--fixed", shown.value.toFixed(3));
+        pinRef.current?.style.setProperty("--fix", roll.value.toFixed(3));
+      }
     };
 
     // The project pins belong to the Projects page, hung on the map: presses and
@@ -728,8 +947,18 @@ export default function Hero() {
       disc.addEventListener("pointerleave", () => scene.onMark?.("cold", i), opts);
     });
 
+    // Measured whenever a card or a name changes size (fonts, the viewport, the owner's copy).
+    const hangRo = new ResizeObserver(measureMarks);
+    for (const mark of marksRef.current) {
+      mark?.querySelectorAll<HTMLElement>(`.${s.markText}, [data-study]`).forEach((el) => hangRo.observe(el));
+    }
+    life.signal.addEventListener("abort", () => hangRo.disconnect());
+
     // ------------------------------------------------------------------ one clock
     let last = performance.now();
+    // The HUD is all that reads the pointer's --px/--py, so they're written on it: on the
+    // root, every frame of the pointer's ease restyled the whole page (~900 elements).
+    const hud = root.querySelector<HTMLElement>(`.${s.hud}`) ?? root;
     const frame = (now: number) => {
       const dt = Math.min(64, now - last) / 1000;
       last = now;
@@ -741,12 +970,14 @@ export default function Hero() {
       if (moved) {
         cur.x += dx * k;
         cur.y += dy * k;
-        root.style.setProperty("--px", cur.x.toFixed(4));
-        root.style.setProperty("--py", cur.y.toFixed(4));
+        hud.style.setProperty("--px", cur.x.toFixed(4));
+        hud.style.setProperty("--py", cur.y.toFixed(4));
       }
       if (descending && map && path) fly(map, path, now, dt);
       // once landed, the camera follows the Projects page (and the mouse, if there is one)
       else if (arrived && map) direct(map);
+      // …and the place answers the About page's thread
+      if (arrived) answer(now, dt);
       frameRaf = requestAnimationFrame(frame);
     };
     if (!reducedMotion) frameRaf = requestAnimationFrame(frame);
@@ -855,6 +1086,7 @@ export default function Hero() {
       labelW.length = 0; // the names are set in viewport units
       clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
+        measureMarks(); // the stems are set in viewport units
         if (descending && map) path = plan();
         else if (arrived && map) settle(true);
       }, 160);
@@ -867,7 +1099,11 @@ export default function Hero() {
       cancelAnimationFrame(frameRaf);
       cancelAnimationFrame(surfRaf);
       cancelAnimationFrame(hazeRaf);
+      cancelAnimationFrame(pingRaf);
+      delete scene.demos.map;
+      surf?.setWave(STUDIO, 0, 0);
       delete html.dataset.intro;
+      scene.layers = null;
       scene.glass = null;
       scene.pin = null;
       scene.marks = [];
@@ -890,14 +1126,14 @@ export default function Hero() {
       data-nomap={mapFailed ? "on" : undefined}
       aria-labelledby="hero-title"
     >
-      <div className={s.stage}>
+      <div className={s.stage} data-teardown="stage">
         <div className={s.map} aria-hidden="true">
           <div ref={hostRef} className={s.mapHost} />
         </div>
         <div className={s.scrim} aria-hidden="true" />
         <div className={s.veil} aria-hidden="true" />
 
-        <div className={s.callouts} aria-hidden="true">
+        <div className={s.callouts} aria-hidden="true" data-teardown="names">
           {TERRITORIES.map((t, i) => (
             <div
               key={t.id}
@@ -931,6 +1167,14 @@ export default function Hero() {
               <span ref={reticleAltRef} className={s.reticleAlt} />
             </span>
           </div>
+          {/* the survey ping ("Show me" on the Systems Architect's profile) */}
+          <div ref={pingRef} className={s.ping}>
+            <svg viewBox="0 0 2 2">
+              <circle cx="1" cy="1" r="1" vectorEffect="non-scaling-stroke" />
+              <circle cx="1" cy="1" r="1" vectorEffect="non-scaling-stroke" />
+              <circle cx="1" cy="1" r="1" vectorEffect="non-scaling-stroke" />
+            </svg>
+          </div>
           <div ref={pinRef} className={s.pin}>
             <span className={s.pinPulse} />
             <span className={s.pinDot} />
@@ -938,6 +1182,27 @@ export default function Hero() {
             <span className={s.pinText}>
               <span className={s.pinName}>Carter Road</span>
               <span className={s.pinNote}>The studio</span>
+            </span>
+            {/* where it is, read out as the About page's thread touches down (--fixed, --fix) */}
+            <span className={s.pinFix}>
+              {STUDIO_FIX.map((line, j) => (
+                <span key={j} className={s.fixLine}>
+                  {line.map((c, k) =>
+                    c.digit === undefined ? (
+                      <span key={k}>{c.ch}</span>
+                    ) : (
+                      <span
+                        key={k}
+                        className={s.fixDigit}
+                        // each digit rolls up from 0 a beat after the one before it
+                        style={{ "--n": c.digit, "--a": Math.min(0.4, c.order! * 0.035) } as CSSProperties}
+                      >
+                        <span className={s.fixReel}>{REEL}</span>
+                      </span>
+                    ),
+                  )}
+                </span>
+              ))}
             </span>
           </div>
           {/* The work, numbered as the Projects page lists it; that page drops and lights them. */}
@@ -952,6 +1217,8 @@ export default function Hero() {
               <span className={s.markRipple} />
               <span className={s.markDot} />
               <span className={s.markLeader} />
+              {/* its case study, which the disc springs open into while its case is open */}
+              <Study project={p} />
               <span className={s.markDisc}>{i + 1}</span>
               <span className={s.markText}>
                 <span className={s.markName}>{p.name}</span>
@@ -961,7 +1228,7 @@ export default function Hero() {
           ))}
         </div>
 
-        <div className={s.hud} aria-hidden="true">
+        <div className={s.hud} aria-hidden="true" data-teardown="names">
           <div className={s.hudTopLeft}>
             <span ref={coordRef} className={s.measure} />
             <span ref={altRef} className={s.measure} />
@@ -1013,7 +1280,7 @@ export default function Hero() {
           <span className={s.skipFill} aria-hidden="true" />
         </button>
 
-        <p className={s.credit}>
+        <p className={s.credit} data-teardown="names">
           <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
             © OpenStreetMap
           </a>
@@ -1030,6 +1297,7 @@ export default function Hero() {
 
       <SceneContext value={getScene}>
         <Island ref={islandRef} pages={ISLAND_PAGES} open={phase === "arrived"} reduced={reduced} scene={sceneRef} />
+        <Teardown root={rootRef} reduced={reduced} />
       </SceneContext>
     </section>
   );

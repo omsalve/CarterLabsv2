@@ -12,6 +12,9 @@ import type { CustomLayerInterface, Map as MapLibreMap } from "maplibre-gl";
  *      the outside in, a little chromatic dispersion at the edge, specular light
  *      on the rim that follows the pointer, and a soft shadow beneath.
  *
+ * On request (the Design Director's "Show me") a comet of light runs once round
+ * the rim of each shape, clockwise from the top left.
+ *
  * Shapes are given in CSS pixels, viewport coordinates, the same space the DOM
  * uses, so HTML content can sit exactly on top.
  */
@@ -25,12 +28,26 @@ export type GlassShape = {
   opacity: number;
 };
 
+/**
+ * For the teardown (components/teardown), which lifts each layer of a frame out on
+ * its own: draw nothing; only the atmosphere; or only the glass and its shadow, on a
+ * frame cleared once the glass has taken its copy of the map.
+ */
+export type GlassCapture = "off" | "mute" | "atmosphere" | "isolate";
+
+/** How far in from the rim the lens reaches, and how wide the frost's blur is, in CSS px. */
+export const LENS = 30;
+export const FROST = 15;
+
 export type GlassLayer = CustomLayerInterface & {
   setShapes(shapes: GlassShape[]): void;
+  capture(mode: GlassCapture): void;
   /** pointer in -1..1, drives where the light sits */
   setLight(x: number, y: number): void;
   /** 0..1, the top-of-frame haze used once the camera is pitched */
   setHaze(value: number): void;
+  /** one lap of light round the rim; `still`, the whole rim brightens and fades instead (reduced motion) */
+  sweep(still?: boolean): void;
   /** "failed" means this GPU cannot read back the map; callers fall back to CSS glass */
   readonly status: "pending" | "ok" | "failed";
 };
@@ -71,6 +88,7 @@ uniform float u_radius;
 uniform float u_px;       // device pixels per CSS pixel
 uniform vec2 u_light;     // unit vector toward the light, GL coords
 uniform float u_opacity;
+uniform vec3 u_sweep;     // the lap of light: where its head is (0..1 round the rim), how bright, 1 = the whole rim at once
 out vec4 fragColor;
 
 float sdShape(vec2 p) {
@@ -124,13 +142,13 @@ void main() {
     vec2 n = normalize(vec2(sdShape(p + h.xy) - sdShape(p - h.xy), sdShape(p + h.yx) - sdShape(p - h.yx)) + 1e-6);
 
     // the rim is a lens: near the edge the glass drags in what lies beyond it
-    float L = 30.0 * px;
+    float L = ${LENS.toFixed(1)} * px;
     float rim = clamp(1.0 - e / L, 0.0, 1.0);
     float bend = rim * rim * rim;
     vec2 base = u_rect.xy + p * 0.972;
     vec2 disp = n * bend * L * 1.4;
 
-    float blurR = 15.0 * px;
+    float blurR = ${FROST.toFixed(1)} * px;
     float lod = log2(max(1.0, blurR / 3.2));
     vec3 body = frost(base + disp, blurR, lod);
     if (bend > 0.004) {
@@ -151,6 +169,16 @@ void main() {
     float sheen = smoothstep(-u_rect.w * 0.1, u_rect.w, p.y) * 0.045;
     col += vec3(1.0, 0.965, 0.945) * (spec + glow + sheen);
 
+    // the lap of light: a bright head with a tail that trails round the rim behind it
+    if (u_sweep.y > 0.001) {
+      vec2 q = p / max(u_rect.zw, vec2(1.0));
+      float a = fract(atan(q.x, q.y) / 6.2831853 + 1.0); // 0 at the top, clockwise on screen
+      float behind = fract(u_sweep.x - a);
+      float ahead = fract(a - u_sweep.x);
+      float comet = mix(min(1.0, exp(-behind * 6.0) + exp(-pow(ahead / 0.012, 2.0))), 0.7, u_sweep.z);
+      col += vec3(1.0, 0.97, 0.95) * comet * u_sweep.y * (edge * 2.6 + pow(rim, 2.2) * 0.5);
+    }
+
     float grain = fract(sin(dot(frag, vec2(12.9898, 78.233))) * 43758.5453);
     col += (grain - 0.5) / 255.0;
   }
@@ -158,6 +186,14 @@ void main() {
   float a = inside + (1.0 - inside) * outer;
   fragColor = vec4(col * inside, a) * u_opacity;
 }`;
+
+/** One lap of light round the rim, in ms. */
+const SWEEP_MS = 1500;
+const smoothstep = (a: number, b: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 
 function compile(gl: WebGL2RenderingContext, type: number, src: string) {
   const shader = gl.createShader(type)!;
@@ -194,6 +230,9 @@ export function createGlassLayer(id = "glass"): GlassLayer {
   let shapes: GlassShape[] = [];
   let light: [number, number] = [-0.55, 0.835];
   let haze = 0;
+  let sweepAt = 0;
+  let sweepStill = false;
+  let mode: GlassCapture = "off";
   let status: "pending" | "ok" | "failed" = "pending";
   const uGlass: Record<string, WebGLUniformLocation | null> = {};
   const uAtmos: Record<string, WebGLUniformLocation | null> = {};
@@ -231,6 +270,9 @@ export function createGlassLayer(id = "glass"): GlassLayer {
       shapes = next;
       map?.triggerRepaint();
     },
+    capture(next) {
+      mode = next;
+    },
     setLight(x, y) {
       // pointer right/down moves the light with it; GL y points up
       const lx = -0.55 + x * 0.6;
@@ -240,6 +282,11 @@ export function createGlassLayer(id = "glass"): GlassLayer {
     },
     setHaze(value) {
       haze = value;
+      map?.triggerRepaint();
+    },
+    sweep(still = false) {
+      sweepAt = performance.now();
+      sweepStill = still;
       map?.triggerRepaint();
     },
 
@@ -253,7 +300,7 @@ export function createGlassLayer(id = "glass"): GlassLayer {
         settle(false);
         return;
       }
-      for (const name of ["u_bounds", "u_viewport", "u_bg", "u_texSize", "u_copy", "u_rect", "u_radius", "u_px", "u_light", "u_opacity"]) {
+      for (const name of ["u_bounds", "u_viewport", "u_bg", "u_texSize", "u_copy", "u_rect", "u_radius", "u_px", "u_light", "u_opacity", "u_sweep"]) {
         uGlass[name] = gl.getUniformLocation(glass, name);
       }
       for (const name of ["u_bounds", "u_viewport", "u_haze"]) uAtmos[name] = gl.getUniformLocation(atmos, name);
@@ -278,7 +325,7 @@ export function createGlassLayer(id = "glass"): GlassLayer {
     },
 
     render(gl) {
-      if (!glass || !atmos || !vao || status === "failed") return;
+      if (!glass || !atmos || !vao || status === "failed" || mode === "mute") return;
       const W = gl.drawingBufferWidth;
       const H = gl.drawingBufferHeight;
       const canvas = gl.canvas as HTMLCanvasElement;
@@ -299,7 +346,7 @@ export function createGlassLayer(id = "glass"): GlassLayer {
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
       const live = shapes.filter((s) => s.opacity > 0.002 && s.w > 2 && s.h > 2);
-      if (!live.length) {
+      if (!live.length || mode === "atmosphere") {
         gl.bindVertexArray(null);
         return;
       }
@@ -336,6 +383,13 @@ export function createGlassLayer(id = "glass"): GlassLayer {
         gl.bindVertexArray(null);
         return;
       }
+      if (mode === "isolate") {
+        // the glass has its copy of the map: clear the frame so only the glass is left on it
+        gl.disable(gl.SCISSOR_TEST);
+        gl.colorMask(true, true, true, true);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+      }
 
       // 3. the glass itself
       gl.useProgram(glass);
@@ -345,6 +399,12 @@ export function createGlassLayer(id = "glass"): GlassLayer {
       gl.uniform4f(uGlass.u_copy, x0, y0, cw, ch);
       gl.uniform1f(uGlass.u_px, px);
       gl.uniform2f(uGlass.u_light, light[0], light[1]);
+      // the lap of light, if one is running: it eases round once, brightening in and out
+      const lap = sweepAt ? (performance.now() - sweepAt) / SWEEP_MS : 1;
+      if (lap >= 1) sweepAt = 0;
+      else map?.triggerRepaint();
+      const bright = lap < 1 ? smoothstep(0, 0.1, lap) * (1 - smoothstep(0.62, 1, lap)) : 0;
+      gl.uniform3f(uGlass.u_sweep, 0.875 + easeInOut(Math.min(1, lap)), sweepStill ? bright * 0.8 : bright, sweepStill ? 1 : 0);
       const pad = 110 * px;
       for (const s of live) {
         const cx = (s.x + s.w / 2) * px;

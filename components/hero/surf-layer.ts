@@ -1,5 +1,6 @@
 import type { CustomLayerInterface, CustomRenderMethodInput, Map as MapLibreMap } from "maplibre-gl";
 import field from "./surf-field.json";
+import { mercator, type LngLat } from "./geo";
 
 /**
  * Surf along Bandra's shoreline, drawn in the map's own GL context.
@@ -10,6 +11,10 @@ import field from "./surf-field.json";
  * swell lines travelling shoreward, whitewater where they break, and a swash line
  * that breathes on the sand. Sheltered water (Mahim creek, the lee of Uarashi
  * Reef) stays flat because the field says so, not because we masked it by hand.
+ *
+ * On request (the place answering the About page's thread) a wave of light runs
+ * out from a point: where its ring crosses the shore, the surf catches it, so it
+ * reads as two lights running away from each other along the coast.
  */
 
 const VERT = `#version 300 es
@@ -30,6 +35,8 @@ uniform float u_opacity;
 uniform vec2 u_metres;
 uniform float u_waterRange;
 uniform float u_landRange;
+uniform vec3 u_wave;      // a wave of light: where it started (metres in the field) and how far it has run
+uniform float u_waveGain;
 in vec2 v_uv;
 out vec4 fragColor;
 
@@ -99,12 +106,21 @@ void main() {
   // Shallow water carries a little light.
   float shallow = smoothstep(260.0, 0.0, dw) * (0.25 + 0.75 * expo) * step(0.0, sd);
 
+  // The wave of light, where its ring crosses the nearshore water: the swash, the
+  // foam and the breaking crests catch it most.
+  float glint = 0.0;
+  if (u_waveGain > 0.001) {
+    float ring = (distance(p, u_wave.xy) - u_wave.z) / 190.0;
+    glint = u_waveGain * exp(-ring * ring) * (1.0 - smoothstep(10.0, 240.0, dw)) * (0.4 + 0.6 * expo);
+  }
+
   float a = swell * 0.58 + foam * 0.34 + swash * 0.52 + shallow * 0.045;
+  a += glint * (0.2 + 0.9 * swash + 0.7 * foam + 0.5 * crest * surfZone);
   vec2 edge = smoothstep(0.0, 0.07, v_uv) * smoothstep(0.0, 0.07, 1.0 - v_uv);
-  a = clamp(a, 0.0, 0.85) * u_opacity * edge.x * edge.y;
+  a = clamp(a, 0.0, 0.85 + 0.1 * glint) * u_opacity * edge.x * edge.y;
 
   // bone foam; the long swell lines far out carry a trace of blood
-  vec3 col = mix(vec3(0.66, 0.42, 0.41), vec3(0.93, 0.9, 0.86), clamp(surfZone + foam + swash, 0.0, 1.0));
+  vec3 col = mix(vec3(0.66, 0.42, 0.41), vec3(0.93, 0.9, 0.86), clamp(surfZone + foam + swash + glint, 0.0, 1.0));
   fragColor = vec4(col * a, a);
 }`;
 
@@ -133,6 +149,8 @@ function multiply(a: ArrayLike<number>, b: ArrayLike<number>) {
 export type SurfLayer = CustomLayerInterface & {
   setOpacity(value: number): void;
   setFrozen(frozen: boolean): void;
+  /** a wave of light from `at`, `radius` metres out, at `gain` 0..1 (0: none) */
+  setWave(at: LngLat, radius: number, gain: number): void;
 };
 
 export function createSurfLayer(id = "surf", textureUrl = "/surf/bandra-surf.png"): SurfLayer {
@@ -150,6 +168,7 @@ export function createSurfLayer(id = "surf", textureUrl = "/surf/bandra-surf.png
   // local quad (0..1) → mercator
   const local = new Float64Array([x1 - x0, 0, 0, 0, 0, y1 - y0, 0, 0, 0, 0, 1, 0, x0, y0, 0, 1]);
   const metres = [field.size[0] * field.cellMetres, field.size[1] * field.cellMetres];
+  const wave = { x: 0, y: 0, r: 0, gain: 0 };
 
   return {
     id,
@@ -164,6 +183,16 @@ export function createSurfLayer(id = "surf", textureUrl = "/surf/bandra-surf.png
     setFrozen(value: boolean) {
       frozen = value;
     },
+    setWave(at, radius, gain) {
+      if (gain <= 0 && wave.gain <= 0) return;
+      // where it starts, in the field's metres (the same space the shader measures in)
+      const m = mercator(at);
+      wave.x = ((m.x - x0) / (x1 - x0)) * metres[0];
+      wave.y = ((m.y - y0) / (y1 - y0)) * metres[1];
+      wave.r = radius;
+      wave.gain = Math.max(0, gain);
+      map?.triggerRepaint();
+    },
 
     onAdd(m, gl) {
       map = m;
@@ -173,7 +202,7 @@ export function createSurfLayer(id = "surf", textureUrl = "/surf/bandra-surf.png
       gl.attachShader(program, vs);
       gl.attachShader(program, fs);
       gl.linkProgram(program);
-      for (const name of ["u_matrix", "u_field", "u_time", "u_opacity", "u_metres", "u_waterRange", "u_landRange"]) {
+      for (const name of ["u_matrix", "u_field", "u_time", "u_opacity", "u_metres", "u_waterRange", "u_landRange", "u_wave", "u_waveGain"]) {
         uniforms[name] = gl.getUniformLocation(program, name);
       }
       buffer = gl.createBuffer();
@@ -242,6 +271,8 @@ export function createSurfLayer(id = "surf", textureUrl = "/surf/bandra-surf.png
       gl.uniform2f(uniforms.u_metres, metres[0], metres[1]);
       gl.uniform1f(uniforms.u_waterRange, field.waterRange);
       gl.uniform1f(uniforms.u_landRange, field.landRange);
+      gl.uniform3f(uniforms.u_wave, wave.x, wave.y, wave.r);
+      gl.uniform1f(uniforms.u_waveGain, wave.gain);
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

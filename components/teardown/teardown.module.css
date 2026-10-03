@@ -1,0 +1,435 @@
+/* ------------------------------------------------------------------ the teardown */
+
+/* The whole screen, over everything (a modal dialog, so the rest of the site is
+   inert while it's apart). Teardown.tsx sets its opacity every frame (an empty
+   value is full): the void closes over the live site as the frame lifts off, and
+   it is the same frame. */
+.dialog {
+  --edge: clamp(18px, 2.4vw, 36px);
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: var(--void);
+  color: var(--bone);
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dialog:not([open]) {
+  display: none;
+}
+
+.dialog::backdrop {
+  background: transparent;
+}
+
+.dialog[data-drag] {
+  cursor: grabbing;
+}
+
+.dialog:focus {
+  outline: none;
+}
+
+/* ------------------------------------------------------------------ the stack */
+
+.space {
+  position: absolute;
+  inset: 0;
+  perspective-origin: 50% 50%;
+  pointer-events: none;
+}
+
+.rig {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  transform-style: preserve-3d;
+}
+
+.plane,
+.content {
+  position: absolute;
+  inset: 0;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Each layer's edge, drawn like the view debugger draws a view's bounds: a hairline
+   that only appears as the layers part (2px at the stack's half size). */
+.frame {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgb(237 230 222 / 0.22);
+  /* and the faintest sheet, so a sparse layer (a road, a pane of glass) still reads as a layer */
+  background: rgb(237 230 222 / 0.018);
+  opacity: 0; /* Teardown.tsx lights it as the layers part */
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ labels */
+
+.leaders {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.leaders path {
+  fill: none;
+  stroke: rgb(237 230 222 / 0.34);
+  stroke-width: 1;
+}
+
+.leaders circle {
+  fill: var(--bone);
+}
+
+.labels {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 15.5rem;
+  transition: filter 300ms var(--ease-out);
+}
+
+.label {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  column-gap: 12px;
+  align-items: start;
+  width: 100%;
+  margin: -6px 0 0 -6px;
+  padding: 6px;
+  border: 0;
+  border-radius: 16px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 240ms var(--ease-out);
+}
+
+.label:hover,
+.label[aria-pressed="true"] {
+  background: rgb(255 255 255 / 0.045);
+}
+
+.label:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 2px;
+}
+
+/* the one picked out reads first; the rest step back with their layers */
+.row[data-lit="off"] {
+  filter: brightness(0.5);
+}
+
+.disc {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #1c1818, #0a0808);
+  box-shadow:
+    inset 0 0 0 1px rgb(237 230 222 / 0.2),
+    inset 0 1px 0 rgb(255 255 255 / 0.1);
+  color: var(--bone);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.disc:empty {
+  visibility: hidden;
+}
+
+.text {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding-top: 3px;
+}
+
+.name {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bone);
+}
+
+.source {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--bone-soft);
+}
+
+.measure {
+  font-family: var(--font-measure);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  color: var(--ash);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ chrome */
+
+.head {
+  position: absolute;
+  top: var(--edge);
+  left: var(--edge);
+  max-width: 24rem;
+  pointer-events: none;
+}
+
+.title {
+  outline: none;
+}
+
+.hint {
+  margin: 12px 0 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--bone-soft);
+}
+
+.hintTouch {
+  display: none;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .hintFine {
+    display: none;
+  }
+
+  .hintTouch {
+    display: inline;
+  }
+}
+
+/* "Put it back": a small capsule, where an iOS sheet keeps Done */
+.back {
+  position: absolute;
+  top: var(--edge);
+  right: var(--edge);
+  padding: 10px 16px 11px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.045);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  color: var(--bone);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 240ms var(--ease-out),
+    transform 200ms var(--ease-out);
+}
+
+.back:hover {
+  background: rgb(255 255 255 / 0.08);
+}
+
+.back:active {
+  transform: scale(0.96);
+  transition-duration: 120ms;
+}
+
+.back:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 3px;
+}
+
+/* The three, and what each of them made: press one and their layers rise. */
+.legend {
+  position: absolute;
+  left: var(--edge);
+  bottom: var(--edge);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.maker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 16px 0 6px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.045);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  color: var(--bone);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 240ms var(--ease-out),
+    transform 200ms var(--ease-out);
+}
+
+.maker .disc {
+  width: 28px;
+  height: 28px;
+  font-size: 0.75rem;
+}
+
+.maker:hover,
+.maker[aria-pressed="true"] {
+  background: rgb(255 255 255 / 0.085);
+}
+
+.maker:active {
+  transform: scale(0.965);
+  transition-duration: 120ms;
+}
+
+.maker:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 3px;
+}
+
+.count {
+  font-weight: 500;
+  color: var(--ash);
+}
+
+/* ------------------------------------------------------------------ phones */
+
+/* No room beside the stack: one layer is read at a time, under it. */
+.reader {
+  display: none;
+}
+
+.dialog[data-compact="on"] .labels,
+.dialog[data-compact="on"] .leaders {
+  display: none;
+}
+
+.dialog[data-compact="on"] .reader {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: calc(var(--edge) + 52px);
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  min-height: 92px;
+  padding: 8px;
+  border-radius: 32px;
+  background: rgb(255 255 255 / 0.045);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+}
+
+.read {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  column-gap: 12px;
+  align-items: start;
+  padding: 4px 6px;
+}
+
+.prompt {
+  grid-column: 1 / -1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--bone-soft);
+  text-align: center;
+}
+
+.stepper {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.045);
+  color: var(--bone);
+  cursor: pointer;
+}
+
+.stepper svg {
+  width: 16px;
+  height: 16px;
+}
+
+.stepper:active {
+  transform: scale(0.94);
+}
+
+.dialog[data-compact="on"] .legend {
+  left: 10px;
+  right: 10px;
+  bottom: var(--edge);
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.dialog[data-compact="on"] .maker {
+  height: 36px;
+  padding: 0 11px 0 4px;
+  gap: 7px;
+  font-size: 0.75rem;
+}
+
+.dialog[data-compact="on"] .maker .count {
+  display: none;
+}
+
+.dialog[data-compact="on"] .head {
+  right: var(--edge);
+  max-width: none;
+  padding-right: 110px;
+}
+
+.dialog[data-compact="on"] .title {
+  font-size: 1.6rem;
+}

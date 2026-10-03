@@ -1,8 +1,10 @@
 import s from "./island.module.css";
 import type { IslandPage } from "./types";
 import { STUDIO, formatLat, formatLng } from "../hero/geo";
-import Lineup from "../lineup/Lineup";
+import About from "../about/About";
 import Projects from "../projects/Projects";
+import Team from "../team/Team";
+import { TEAM } from "../lineup/team";
 
 const Arrow = () => (
   <span className={s.ctaIcon} aria-hidden="true">
@@ -20,8 +22,8 @@ const Arrow = () => (
  * turns its principles into the studio's beliefs, as the owner approved). The
  * projects are the owner's; what we made for each is still to come
  * (projects/work.ts). No contact channel exists yet; the contact form is not
- * wired. The team's roles are the owner's; their names and clips are still to
- * come (lineup/team.ts).
+ * wired. The team's roles are the owner's; their names, clips, bios and links
+ * are still to come (lineup/team.ts).
  */
 export const ISLAND_PAGES: IslandPage[] = [
   {
@@ -53,6 +55,19 @@ export const ISLAND_PAGES: IslandPage[] = [
             Explore the work
             <Arrow />
           </a>
+          {/* the quiet second action: the team, one tap away, led by the squad's
+              numbers (their portraits, once given) overlapping like a group's avatars */}
+          <a className={s.squad} href="#team">
+            <span className={s.faces} aria-hidden="true">
+              {TEAM.map((p, k) => (
+                <span key={p.id} className={s.face} style={{ zIndex: TEAM.length - k }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {p.poster ? <img src={p.poster} alt="" /> : p.number}
+                </span>
+              ))}
+            </span>
+            Meet the three
+          </a>
         </div>
         <div className={s.platter}>
           <span className={s.platterIcon} aria-hidden="true">
@@ -74,36 +89,9 @@ export const ISLAND_PAGES: IslandPage[] = [
   {
     id: "about",
     label: "About us",
-    content: (
-      <>
-        {/* The thread leaves from the marker after "place." and runs out of the glass
-            to the studio pin on the map (Island.tsx draws it). */}
-        <h2 className={s.statement}>
-          Rooted in a real <span className={`${s.script} ${s.threadWord}`}>place</span>.
-          <span data-thread aria-hidden="true" />
-        </h2>
-        <p className={`${s.lede} ${s.ledeWide}`}>
-          <span className={s.leadIn}>
-            CarterLabs is a digital studio on the Carter Road seafront, in Bandra West.
-          </span>{" "}
-          We design and build high-quality digital experiences for brands that want to stand out.
-        </p>
-        <ul className={s.beliefs}>
-          <li className={s.belief}>
-            <span className={s.beliefTitle}>Intentional over impressive</span>
-            <span className={s.beliefText}>Every motion and every element has to earn its place.</span>
-          </li>
-          <li className={s.belief}>
-            <span className={s.beliefTitle}>Restraint is the premium signal</span>
-            <span className={s.beliefText}>Fewer, better moments, made with care.</span>
-          </li>
-          <li className={s.belief}>
-            <span className={s.beliefTitle}>Never a template</span>
-            <span className={s.beliefText}>Nothing we make should look like it came from one.</span>
-          </li>
-        </ul>
-      </>
-    ),
+    // A nib writes "place." in and runs on as the thread to the studio pin; as it
+    // touches down the place answers (components/about).
+    content: <About />,
   },
   {
     id: "projects",
@@ -115,17 +103,9 @@ export const ISLAND_PAGES: IslandPage[] = [
   {
     id: "team",
     label: "Team",
-    content: (
-      <>
-        {/* The lineup deals out as the page rises, then the three walk out one by one
-            (components/lineup). */}
-        <h2 className={s.statement}>
-          The starting <span className={s.script}>three</span>.
-        </h2>
-        <p className={s.lede}>A small squad, on purpose. The people you meet are the people who build it.</p>
-        <Lineup />
-      </>
-    ),
+    // The lineup deals out as the page rises and the three walk out one by one
+    // (components/lineup); a card lifts into its player's profile (components/team).
+    content: <Team />,
   },
   {
     id: "contact",

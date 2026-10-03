@@ -1,0 +1,165 @@
+/* ------------------------------------------------------------------ the About page */
+
+/* The page's peak: set larger than a section's opening line, as the manifesto the
+   other pages answer to, and sized to the island's text column. A little room under
+   it before the lede, for its size. */
+.statement {
+  position: relative;
+  margin: 0;
+  padding-bottom: 6px;
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: clamp(2rem, 10.4cqi, 3.25rem);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+/* The word and its full stop, as the nib writes them in: the ink is solid up to the
+   nib (--ink, px from this box's left, set per frame by About.tsx) and past it the
+   word waits as a faint trace. Padded, and pulled back by as much, so the mask has
+   room for the script's swashes. */
+.signed {
+  display: inline-block;
+  padding: 0.6em 0.3em 0.75em 0.4em;
+  margin: -0.6em -0.3em -0.75em -0.4em;
+}
+
+.signed[data-ink] {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(var(--ink, 0px) - 18px), rgb(0 0 0 / 0.16) var(--ink, 0px));
+  mask-image: linear-gradient(to right, #000 calc(var(--ink, 0px) - 18px), rgb(0 0 0 / 0.16) var(--ink, 0px));
+}
+
+/* The word the sentence turns on, signed in Lit Blood. It takes a little of the pin's
+   light as the thread touches down (--thread is set on the island by Island.tsx). */
+.word {
+  font-family: var(--font-script);
+  font-weight: 400; /* one weight only: never inherit a faux bold from the heading */
+  font-synthesis: none;
+  font-size: 1.62em;
+  line-height: 0.5;
+  letter-spacing: 0; /* the script's joins are drawn to meet */
+  color: var(--blood-lit);
+  padding: 0 0.06em 0 0.02em;
+  text-shadow: 0 0 calc(var(--thread, 0) * 22px) rgb(196 32 42 / calc(var(--thread, 0) * 0.6));
+}
+
+/* The nib: a point of light that writes the word in, then hands over to the thread's
+   bead at the full stop (About.tsx moves it). Behind it the ink runs hot, as Carter
+   Road's leading edges do while the road lights. */
+.nib {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: var(--bone);
+  box-shadow: 0 0 6px rgb(237 230 222 / 0.75);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nib::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  width: 64px;
+  height: 34px;
+  translate: 0 -50%;
+  background: radial-gradient(ellipse 100% 50% at 100% 50%, rgb(255 178 164 / 0.5), rgb(196 32 42 / 0.16) 45%, transparent 75%);
+}
+
+/* The beliefs, as an inset grouped list: one platter, 8px in (so concentric), rows
+   parted by hairlines that start on the text column, as in iOS. As the page rises
+   its fill comes with its first row (--bg) and each hairline draws in as the row
+   under it lands (--line), both set per frame by About.tsx. */
+.beliefs {
+  --bg: 1;
+  position: relative;
+  display: grid;
+  margin: 26px -24px 0;
+  padding: 6px 0;
+  list-style: none;
+}
+
+.beliefs::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 32px;
+  background: rgb(255 255 255 / 0.045);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  opacity: var(--bg);
+  pointer-events: none;
+}
+
+.belief {
+  --line: 1;
+  position: relative;
+  display: grid;
+  gap: 3px;
+  padding: 13px 24px 14px;
+}
+
+.belief + .belief::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: var(--hairline);
+  transform: scaleX(var(--line));
+  transform-origin: left center;
+}
+
+.beliefTitle {
+  font-size: 0.975rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--bone);
+}
+
+.beliefText {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--bone-soft);
+  text-wrap: pretty;
+}
+
+/* ------------------------------------------------------------------ compact */
+
+@media (max-width: 759px) {
+  /* On a phone the thread runs along the line to the island's right margin before
+     it climbs, so the line breaks well short of it: "Rooted in a / real place." */
+  .statement {
+    max-width: 7.5em;
+    font-size: clamp(2rem, 11cqi, 2.6rem);
+  }
+
+  .beliefs {
+    margin-inline: -14px;
+  }
+
+  .belief {
+    padding-inline: 14px;
+  }
+
+  .belief + .belief::before {
+    left: 14px;
+    right: 14px;
+  }
+}
+
+/* ------------------------------------------------------------------ calm */
+
+/* The word is already written and nothing travels (About.tsx); the nib never shows. */
+@media (prefers-reduced-motion: reduce) {
+  .nib {
+    display: none;
+  }
+}

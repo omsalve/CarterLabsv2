@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, type CSSProperties } from "react";
 import s from "./lineup.module.css";
 import { Spring } from "../island/spring";
-import { TEAM, type Player } from "./team";
+import { TEAM, called, type Player } from "./team";
 
 /**
  * The Team page's lineup: the starting three, revealed like a matchday line-up.
@@ -19,7 +19,9 @@ import { TEAM, type Player } from "./team";
  *   the lineup walks out again the next time the page arrives.
  *
  * On a fine pointer each card tilts under it like an Apple TV poster, its layers
- * parting in depth. A touch lifts the card under the finger.
+ * parting in depth, and the other two step out of the light. A touch lifts the
+ * card under the finger. Each card is a button:
+ * the Team page lifts it into its player's profile (components/team).
  */
 
 const WALK = {
@@ -30,6 +32,8 @@ const WALK = {
 const DECK = { fan: 5, drop: 10, shrink: 0.06 };
 /** The tilt under the pointer (deg), and how far the card lifts (scale). */
 const TILT = { x: 7, y: 5, lift: 0.022 };
+/** While one card is under the pointer, the others dim this much: the spotlight is on it. */
+const SPOT = 0.3;
 const GAP = 6; // keep in step with .lineup's gap
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -43,14 +47,22 @@ const px = (x: number, y: number) => (Math.abs(x) + Math.abs(y) < 0.01 ? "" : `t
 const SAFARI = /^((?!chrome|android|crios|fxios|edg).)*safari/i;
 
 /** Safari plays alpha only in HEVC; everyone else, only in VP9 WebM. */
-function sourceFor(p: Player) {
+export function sourceFor(p: Player) {
   const v = p.video;
   if (!v) return "";
   if (!p.matte) return v.mp4 || v.webm || v.hevc || "";
   return (SAFARI.test(navigator.userAgent) ? v.hevc || v.webm : v.webm || v.hevc) || v.mp4 || "";
 }
 
-export default function Lineup({ players = TEAM }: { players?: Player[] }) {
+type Props = {
+  players?: Player[];
+  /** a card was chosen: lift it into its player's profile (components/team) */
+  onPick?: (k: number) => void;
+  /** whose profile is open, for the accessibility tree (-1: none) */
+  open?: number;
+};
+
+export default function Lineup({ players = TEAM, onPick, open = -1 }: Props) {
   const rootRef = useRef<HTMLOListElement>(null);
 
   useEffect(() => {
@@ -85,6 +97,7 @@ export default function Lineup({ players = TEAM }: { players?: Player[] }) {
         tx: new Spring(0, 0.5, 0.82),
         ty: new Spring(0, 0.5, 0.82),
         lift: new Spring(0, 0.36, 0.9),
+        dim: new Spring(0, 0.4, 1),
         due: Infinity, // when this player walks out
         rolled: false, // the clip has been started for this walkout
         press: { id: -1, x: 0, y: 0 },
@@ -224,8 +237,11 @@ export default function Lineup({ players = TEAM }: { players?: Player[] }) {
         const sw = seg(0.3, 1);
         c.sweep.style.opacity = sw > 0 && sw < 1 ? Math.sin(Math.PI * sw).toFixed(3) : "0";
         c.sweep.style.transform = `translate3d(${((-1.2 + 2.4 * sw) * W).toFixed(1)}px, 0, 0)`;
-        // under the pointer, a highlight where the light would catch the tilted card
+        // under the pointer, a highlight where the light would catch the tilted card,
+        // and the other cards out of the spotlight
         if (fine) {
+          const dim = c.dim.value;
+          c.card.style.filter = dim > 0.002 ? `brightness(${(1 - SPOT * dim).toFixed(3)}) saturate(${(1 - 0.4 * dim).toFixed(3)})` : "";
           c.glare.style.opacity = lift > 0.002 ? lift.toFixed(3) : "0";
           c.glare.style.setProperty("--gx", `${(50 + tx * 46).toFixed(1)}%`);
           c.glare.style.setProperty("--gy", `${(50 + ty * 46).toFixed(1)}%`);
@@ -238,18 +254,22 @@ export default function Lineup({ players = TEAM }: { players?: Player[] }) {
     let last = 0;
     const busy = () =>
       !deal.resting ||
-      cards.some((c) => c.due < Infinity || !c.walk.resting || !c.tx.resting || !c.ty.resting || !c.lift.resting);
+      cards.some((c) => c.due < Infinity || !c.walk.resting || !c.tx.resting || !c.ty.resting || !c.lift.resting || !c.dim.resting);
 
     const tick = (now: number) => {
       const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
       last = now;
       sync(now);
       deal.step(dt);
+      // one card under the pointer puts the others in its shadow
+      const spot = fine && cards.some((c) => c.lift.target > 0);
       for (const c of cards) {
+        c.dim.target = spot && c.lift.target === 0 ? 1 : 0;
         c.walk.step(dt);
         c.tx.step(dt);
         c.ty.step(dt);
         c.lift.step(dt);
+        c.dim.step(dt);
         // the clip starts as the player steps out of the dark
         if (!c.rolled && c.walk.target === 1 && c.walk.value > 0.22) roll(c);
       }
@@ -370,21 +390,23 @@ export default function Lineup({ players = TEAM }: { players?: Player[] }) {
           key={p.id}
           className={s.card}
           data-media={p.video ? "clip" : p.poster ? "still" : "stand-in"}
-          data-matte={p.matte || (!p.video && !p.poster) ? "" : undefined}
           style={{ zIndex: players.length - Math.round(Math.abs(j - mid)) }}
         >
-          <div className={s.stage}>
-            <span className={s.backlight} aria-hidden="true" />
-            <span className={s.number} aria-hidden="true">
-              {p.number}
-            </span>
-            <div className={s.player} aria-hidden="true">
-              <Media player={p} />
-            </div>
-            <span className={s.scrim} aria-hidden="true" />
-            <div className={s.caption}>
+          {/* the card is a button: it lifts into the player's profile */}
+          <button
+            type="button"
+            className={s.stage}
+            data-card={j}
+            aria-expanded={onPick ? open === j : undefined}
+            aria-controls={onPick ? `player-${p.id}` : undefined}
+            aria-describedby={onPick ? `${p.id}-card-hint` : undefined}
+            disabled={!onPick}
+            onClick={() => onPick?.(j)}
+          >
+            <CardArt player={p} />
+            <span className={s.caption}>
               <span className={s.name}>
-                {p.name ?? p.role}
+                {called(p)}
                 {p.captain && (
                   <span className={s.captain} role="img" aria-label="Captain">
                     C
@@ -392,13 +414,34 @@ export default function Lineup({ players = TEAM }: { players?: Player[] }) {
                 )}
               </span>
               {p.name && <span className={s.role}>{p.role}</span>}
-            </div>
+            </span>
+            <span id={`${p.id}-card-hint`} hidden>
+              Number {p.number}. Opens their profile.
+            </span>
             <span className={s.sweep} aria-hidden="true" />
             <span className={s.glare} aria-hidden="true" />
-          </div>
+          </button>
         </li>
       ))}
     </ol>
+  );
+}
+
+/**
+ * What a card shows behind its caption: the backlight, the shirt number, the
+ * player and the scrim. The profile's poster carries the same art, scaled up, so
+ * the card can grow into it (components/team).
+ */
+export function CardArt({ player: p, className = "" }: { player: Player; className?: string }) {
+  return (
+    <span className={`${s.art} ${className}`} data-matte={p.matte || (!p.video && !p.poster) ? "" : undefined} aria-hidden="true">
+      <span className={s.backlight} />
+      <span className={s.number}>{p.number}</span>
+      <span className={s.player}>
+        <Media player={p} />
+      </span>
+      <span className={s.scrim} />
+    </span>
   );
 }
 

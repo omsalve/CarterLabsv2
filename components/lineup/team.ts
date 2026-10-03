@@ -1,3 +1,5 @@
+import type { Demo } from "../island/types";
+
 /**
  * The starting three, in lineup order: left to right, and the order they walk out.
  *
@@ -15,6 +17,9 @@
  * - `poster` is the still shown before the clip loads, and instead of it when the
  *   visitor prefers reduced motion. A poster on its own works too.
  * With no media at all, the card shows a backlit stand-in.
+ *
+ * Each player also has a profile (components/team): tapping their card lifts it
+ * into their poster, reachable at #team/<id>.
  */
 export type Player = {
   id: string;
@@ -23,6 +28,19 @@ export type Player = {
   /** TODO: the person's name; until it's set, the role is the card's headline */
   name?: string;
   captain?: boolean;
+  /** where the number plays on the pitch, and what that means in the studio */
+  position: { name: string; plays: string };
+  /** what they lead in the studio (the owner's description of the team) */
+  leads: string;
+  /**
+   * The part of this site that is theirs, by role; "Show me" plays it live.
+   * TODO(owner): confirm who made what; change `title` or drop the row.
+   */
+  signature?: { title: string; demo: Demo };
+  /** TODO(owner): a line or two in their own words; shown on their profile once set */
+  bio?: string;
+  /** TODO(owner): where to find them, e.g. { label: "LinkedIn", href: "https://…" } */
+  links?: { label: string; href: string }[];
   poster?: string;
   video?: { webm?: string; hevc?: string; mp4?: string };
   matte?: boolean;
@@ -30,7 +48,32 @@ export type Player = {
 };
 
 export const TEAM: Player[] = [
-  { id: "design", number: 10, role: "Design Director", captain: true },
-  { id: "frontend", number: 7, role: "Frontend Lead" },
-  { id: "systems", number: 4, role: "Systems Architect" },
+  {
+    id: "design",
+    number: 10,
+    role: "Design Director",
+    captain: true,
+    position: { name: "Playmaker", plays: "sets the play" },
+    leads: "Design",
+    signature: { title: "The glass", demo: "glass" },
+  },
+  {
+    id: "frontend",
+    number: 7,
+    role: "Frontend Lead",
+    position: { name: "Winger", plays: "the one on show" },
+    leads: "Frontend engineering",
+    signature: { title: "The stack", demo: "stack" },
+  },
+  {
+    id: "systems",
+    number: 4,
+    role: "Systems Architect",
+    position: { name: "Centre-back", plays: "holds the shape" },
+    leads: "Backend and frameworks",
+    signature: { title: "The map", demo: "map" },
+  },
 ];
+
+/** The name a player goes by on the site: their own once given, their role until then. */
+export const called = (p: Player) => p.name ?? p.role;

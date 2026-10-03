@@ -1,0 +1,543 @@
+/* ------------------------------------------------------------------ the Team page */
+
+/* The lineup and the profiles share one box. The lineup stays in the flow, so it
+   measures true; the profiles lie over it from the top, side by side on a strip
+   (the gallery). While a card lifts, the box's height runs between the two
+   (Team.tsx), and the glass follows it. Everything that moves is drawn per frame. */
+.team {
+  position: relative;
+}
+
+.index {
+  position: relative;
+}
+
+.intro {
+  position: relative;
+  transform-origin: 50% 0;
+}
+
+/* "Take it apart" (components/teardown): a small capsule on the lede's short last
+   line, quiet beside the lineup, which is the page's real business. */
+.apart {
+  position: absolute;
+  right: 0;
+  bottom: -4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 13px 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.045);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  color: var(--bone);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 240ms var(--ease-out),
+    transform 200ms var(--ease-out);
+}
+
+.apart svg {
+  width: 15px;
+  height: 15px;
+}
+
+.apart:hover {
+  background: rgb(255 255 255 / 0.08);
+}
+
+.apart:active {
+  transform: scale(0.96);
+  transition-duration: 120ms;
+}
+
+.apart:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------------ the bar over a profile */
+
+/* Back on the left, as an iOS navigation bar says it; who's showing and Share on
+   the right. It stays put while the profiles slide under it. */
+.bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  visibility: hidden;
+}
+
+.bar > :first-child {
+  margin-right: auto;
+}
+
+/* Who's showing: their shirt numbers in a segmented capsule. The thumb follows the
+   gallery exactly, as the page control's knob follows the stack. */
+.switcher {
+  --g: 0;
+  position: relative;
+  display: flex;
+  height: 32px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.045);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    inset 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+
+.thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 34px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.13);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    0 4px 12px -4px rgb(0 0 0 / 0.8);
+  transform: translate3d(calc(var(--g) * 34px), 0, 0);
+  pointer-events: none;
+}
+
+.switch {
+  position: relative;
+  width: 34px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--bone-soft);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: color 200ms var(--ease-out);
+}
+
+.switch[aria-current="true"],
+.switch:hover {
+  color: var(--bone);
+}
+
+.switch:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 1px;
+}
+
+/* A little more hit area than the capsule shows (24px minimum either way). */
+.switch::after {
+  content: "";
+  position: absolute;
+  inset: -4px -1px;
+}
+
+.share {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 13px 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.045);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  color: var(--bone-soft);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color 200ms var(--ease-out),
+    background-color 200ms var(--ease-out),
+    transform 450ms var(--ease-out);
+}
+
+.share:hover {
+  color: var(--bone);
+  background: rgb(255 255 255 / 0.08);
+}
+
+.share:active {
+  transform: scale(0.96);
+  transition-duration: 120ms;
+}
+
+.share:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 3px;
+}
+
+.share svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
+/* The label changes in place when the link is copied: one word out, the other in. */
+.shareLabel {
+  display: grid;
+}
+
+.shareLabel > span {
+  grid-area: 1 / 1;
+  transition:
+    opacity 260ms var(--ease-out),
+    translate 420ms var(--ease-out),
+    filter 260ms var(--ease-out);
+}
+
+.shareLabel > span:last-child,
+.share[data-done] .shareLabel > span:first-child {
+  opacity: 0;
+  translate: 0 -6px;
+  filter: blur(3px);
+}
+
+.share[data-done] .shareLabel > span:last-child {
+  opacity: 1;
+  translate: 0 0;
+  filter: none;
+}
+
+.shareIcon {
+  display: grid;
+}
+
+.shareIcon > svg {
+  grid-area: 1 / 1;
+  transition:
+    opacity 260ms var(--ease-out),
+    scale 420ms var(--ease-out);
+}
+
+.shareIcon > svg:last-child,
+.share[data-done] .shareIcon > svg:first-child {
+  opacity: 0;
+  scale: 0.6;
+}
+
+.share[data-done] .shareIcon > svg:last-child {
+  opacity: 1;
+  scale: 1;
+}
+
+/* ------------------------------------------------------------------ a profile */
+
+.profile {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  visibility: hidden;
+  transform-origin: 50% 30%;
+}
+
+/* The poster: one platter 8px in from the glass (so concentric at 32px), as wide as
+   the glass allows and as tall as the viewport lets the whole profile fit. */
+.stage {
+  --stage-h: clamp(210px, calc(100svh - 520px), 340px);
+  position: relative;
+  height: var(--stage-h);
+  margin: 0 -24px;
+}
+
+.profile[data-bio] .stage {
+  --stage-h: clamp(200px, calc(100svh - 600px), 320px);
+}
+
+/* The window the poster shows through. At rest it is the stage; while the card
+   lifts it runs from the card's box to the stage's (Team.tsx), clipping as it goes. */
+.window {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 32px;
+  background: linear-gradient(180deg, #141111 0%, #0b0909 52%, #050404 100%);
+  box-shadow: 0 12px 26px -14px rgb(0 0 0 / 0.9);
+  transform-origin: 0 0;
+}
+
+.window::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.09);
+  pointer-events: none;
+}
+
+/* Everything the poster holds is laid out on the canvas, which keeps the stage's
+   size while the window moves (Team.tsx pins it in place). */
+.canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  container-type: size;
+}
+
+/* The card's own art, scaled up: a 5:7 portrait standing right of centre, its
+   number behind it, like a broadcast player graphic. The card grows into it. */
+.canvas > .group {
+  inset: auto;
+  left: calc(69% - 100cqh * 5 / 14);
+  bottom: 0;
+  width: calc(100cqh * 5 / 7);
+  height: 100cqh;
+  transform-origin: 0 0;
+}
+
+/* The card's backlight reaches its edges, which the card hides; standing in the
+   wider poster, its top wash is drawn in so it dies out before the group's edges. */
+.canvas > .group > :first-child {
+  background:
+    radial-gradient(60% 40% at 50% 46%, rgb(237 230 222 / 0.24), rgb(237 230 222 / 0.07) 55%, transparent 78%),
+    radial-gradient(52% 30% at 50% 0%, rgb(237 230 222 / 0.08), transparent 90%);
+}
+
+/* Footage with its own background fades into the tunnel on its left. */
+.canvas > .group:not([data-matte]) {
+  -webkit-mask-image: linear-gradient(to right, rgb(0 0 0 / var(--unmask, 1)) 0%, #000 34%);
+  mask-image: linear-gradient(to right, rgb(0 0 0 / var(--unmask, 1)) 0%, #000 34%);
+}
+
+/* Legibility for the name, as darkness from its corner, never hue. */
+.shade {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background:
+    radial-gradient(130% 95% at 0% 100%, rgb(0 0 0 / 0.72), rgb(0 0 0 / 0.3) 45%, transparent 70%),
+    linear-gradient(to top, rgb(0 0 0 / 0.5), transparent 38%);
+  pointer-events: none;
+}
+
+.caption {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 5;
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  width: 50%;
+  padding: 0 0 26px 28px;
+}
+
+.name {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: clamp(1.7rem, 2.3vw, 2.2rem);
+  line-height: 1.04;
+  letter-spacing: -0.024em;
+  color: var(--bone);
+  text-wrap: balance;
+  transform-origin: 0 0;
+}
+
+.name:focus {
+  outline: none;
+}
+
+.line {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: var(--bone-soft);
+}
+
+/* the number in the line is a measure: tabular, tracked */
+.no {
+  font-family: var(--font-measure);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ash);
+}
+
+/* Where the light catches the tilted poster, under the pointer. */
+.glare {
+  --gx: 50%;
+  --gy: 30%;
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  background: radial-gradient(circle at var(--gx) var(--gy), rgb(255 255 255 / 0.1), transparent 55%);
+  mix-blend-mode: plus-lighter;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bio {
+  margin-top: 16px;
+}
+
+/* ------------------------------------------------------------------ the facts */
+
+/* "Show me": a small capsule inside the row, the part of the site it names plays
+   live. */
+.show {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  margin: -4px -8px -4px 12px;
+  padding: 0 12px 0 9px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.06);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  color: var(--bone);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
+  cursor: pointer;
+  transition:
+    background-color 200ms var(--ease-out),
+    transform 450ms var(--ease-out);
+}
+
+.show:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.show:active {
+  transform: scale(0.95);
+  transition-duration: 120ms;
+}
+
+.show:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 2px;
+}
+
+.show svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* while it plays, the glyph turns: the part it names is live */
+.show[data-live] svg {
+  animation: live 900ms var(--ease-out);
+}
+
+@keyframes live {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+
+.sig {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+/* Where to find them, once the owner supplies it. */
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.045);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  color: var(--bone);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 200ms var(--ease-out);
+}
+
+.link:hover {
+  background: rgb(255 255 255 / 0.08);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------------ compact */
+
+@media (max-width: 759px) {
+  .stage {
+    --stage-h: clamp(200px, calc(100svh - 450px), 300px);
+    margin-inline: -14px;
+  }
+
+  .profile[data-bio] .stage {
+    --stage-h: clamp(190px, calc(100svh - 530px), 280px);
+  }
+
+  .caption {
+    width: 54%;
+    padding: 0 0 20px 18px;
+    gap: 6px;
+  }
+
+  .name {
+    font-size: 1.55rem;
+  }
+}
+
+/* ------------------------------------------------------------------ calm */
+
+@media (prefers-reduced-motion: reduce) {
+  .share,
+  .show,
+  .switch {
+    transition: none;
+  }
+
+  .share:active,
+  .show:active {
+    transform: none;
+  }
+
+  .show[data-live] svg {
+    animation: none;
+  }
+}
